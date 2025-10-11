@@ -72,7 +72,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Space && !e.IsRepeat)
+        if (e is { Key: Key.Insert, IsRepeat: false })
         {
             _viewModel.OnButtonPressed();
         }
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnKeyUp(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Space)
+        if (e.Key == Key.Insert)
         {
             _viewModel.OnButtonReleased();
         }
