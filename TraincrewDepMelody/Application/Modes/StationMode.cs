@@ -49,7 +49,7 @@ public class StationMode : IMode
     public void OnExit()
     {
         _logger.LogInformation("Exit StationMode");
-        _audioPlayer.StopAll();
+        // 駅側の音声は止めない（駅メロディーが鳴っている最中に発車する状況を再現）
         _playbackState = PlaybackState.Idle;
     }
 

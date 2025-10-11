@@ -26,7 +26,6 @@ public class ModeManager
     private readonly ILoggerFactory _loggerFactory;
 
     private StationInfo? _previousStation;
-    private bool _isFirstPressInStationMode = true;
     #endregion
 
     #region プロパティ
@@ -76,24 +75,19 @@ public class ModeManager
         {
             _logger.LogInformation("At station, switching to StationMode");
             SwitchMode(_stationMode);
-            _isFirstPressInStationMode = true;
+            _currentMode.OnButtonPressed();
         }
-        // 駅モード中の2回目以降のボタン押下は車両モードに切り替え
+        // 駅モード中のボタン押下は車両モードに切り替え
         else if (_currentMode is StationMode)
         {
-            if (_isFirstPressInStationMode)
-            {
-                _logger.LogInformation("StationMode: First button press");
-                _isFirstPressInStationMode = false;
-            }
-            else
-            {
-                _logger.LogInformation("StationMode: Second button press, switching to VehicleMode");
-                SwitchMode(_vehicleMode);
-            }
+            _logger.LogInformation("StationMode: Button press, switching to VehicleMode");
+            SwitchMode(_vehicleMode);
+            _currentMode.OnButtonPressed();
         }
-
-        _currentMode.OnButtonPressed();
+        else
+        {
+            _currentMode.OnButtonPressed();
+        }
     }
 
     /// <summary>
@@ -162,7 +156,6 @@ public class ModeManager
     {
         _logger.LogInformation("Station melody not found, switching to VehicleMode");
         SwitchMode(_vehicleMode);
-        _isFirstPressInStationMode = true; // フラグをリセット
         // 車両モードで再生を開始
         _vehicleMode.OnButtonPressed();
     }
@@ -207,7 +200,6 @@ public class ModeManager
             if (_currentMode is StationMode)
             {
                 SwitchMode(_vehicleMode);
-                _isFirstPressInStationMode = true; // フラグをリセット
             }
         }
 
@@ -242,7 +234,6 @@ public class ModeManager
                 if (_currentMode is StationMode)
                 {
                     SwitchMode(_vehicleMode);
-                    _isFirstPressInStationMode = true; // フラグをリセット
                 }
                 break;
         }
