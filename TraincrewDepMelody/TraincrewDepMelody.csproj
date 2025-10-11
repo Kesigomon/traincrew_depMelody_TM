@@ -21,4 +21,19 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="stations\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>stations\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </None>
+    <None Include="profiles\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>profiles\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </None>
+    <None Include="sounds\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>sounds\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
 </Project>
