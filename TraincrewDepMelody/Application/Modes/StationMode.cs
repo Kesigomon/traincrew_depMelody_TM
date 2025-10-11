@@ -107,6 +107,14 @@ public class StationMode : IMode
 
         var melodyPath = _audioRepository.GetStationMelody(station.StationName, station.Platform, _state.Direction);
 
+        // 駅メロディーが見つからない場合は、車両メロディーを再生
+        if (melodyPath == null)
+        {
+            _logger.LogInformation("Station melody not found, switching to vehicle melody");
+            PlayVehicleMelody();
+            return;
+        }
+
         _logger.LogInformation($"Playing station melody: {melodyPath}");
         _audioPlayer.Play("station", melodyPath, loop: false);
         _playbackState = PlaybackState.PlayingMelody;
@@ -125,6 +133,14 @@ public class StationMode : IMode
         }
 
         var announcementPath = _audioRepository.GetStationDoorClosing(station.IsOddPlatform);
+
+        // 駅アナウンスが見つからない場合は車両アナウンスを再生
+        if (announcementPath == null)
+        {
+            _logger.LogInformation("Station door closing not found, switching to vehicle door closing");
+            PlayVehicleDoorClosing();
+            return;
+        }
 
         _logger.LogInformation($"Playing station door closing: {announcementPath}");
         _audioPlayer.Play("station", announcementPath, loop: false);

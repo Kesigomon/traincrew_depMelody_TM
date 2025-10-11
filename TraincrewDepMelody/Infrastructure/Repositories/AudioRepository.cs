@@ -60,7 +60,7 @@ public class AudioRepository
     /// <summary>
     /// 駅メロディー取得
     /// </summary>
-    public string GetStationMelody(string stationName, int platform, Direction direction)
+    public string? GetStationMelody(string stationName, int platform, Direction direction)
     {
         var key = new AudioKey
         {
@@ -74,15 +74,15 @@ public class AudioRepository
             return path;
         }
 
-        // フォールバック: 車両メロディーを使用
-        _logger.LogWarning($"Station melody not found: {stationName} {platform}番線 (using vehicle melody as fallback)");
-        return GetVehicleMelody(direction);
+        // 見つからない場合はnullを返す
+        _logger.LogWarning($"Station melody not found: {stationName} {platform}番線");
+        return null;
     }
 
     /// <summary>
     /// 駅ドア締まりますアナウンス取得
     /// </summary>
-    public string GetStationDoorClosing(bool isOddPlatform)
+    public string? GetStationDoorClosing(bool isOddPlatform)
     {
         var key = new AudioKey
         {
@@ -95,9 +95,9 @@ public class AudioRepository
             return path;
         }
 
-        // フォールバック: 車両ドア締まりますを使用
-        _logger.LogWarning($"Station door closing not found: {(isOddPlatform ? "奇数" : "偶数")}番線 (using vehicle door closing as fallback)");
-        return GetVehicleDoorClosing();
+        // 見つからない場合はnullを返す
+        _logger.LogWarning($"Station door closing not found: {(isOddPlatform ? "奇数" : "偶数")}番線");
+        return null;
     }
 
     /// <summary>
