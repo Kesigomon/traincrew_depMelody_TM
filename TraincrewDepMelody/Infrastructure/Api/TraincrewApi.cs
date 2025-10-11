@@ -80,6 +80,11 @@ public class TraincrewApi : ITraincrewApi, IDisposable
         TrainCrewInput.RequestData(DataRequest.Signal);
         var trainState = TrainCrewInput.GetTrainState();
         _trainNumber = trainState.diaName;
+        if (TrainCrewInput.gameState.gameScreen
+            is not (GameScreen.MainGame or GameScreen.MainGame_Pause))
+        {
+           return; 
+        }
 
         while (_webSocket.State != WebSocketState.Open)
         {
