@@ -21,10 +21,10 @@ public partial class MainWindow : Window
         _viewModel = new MainViewModel();
         DataContext = _viewModel;
 
-        // タイマー初期化 (20ms間隔で状態更新)
+        // タイマー初期化 (100ms間隔で状態更新)
         _updateTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(20)
+            Interval = TimeSpan.FromMilliseconds(100)
         };
         _updateTimer.Tick += (s, e) => _viewModel.Update();
         _updateTimer.Start();

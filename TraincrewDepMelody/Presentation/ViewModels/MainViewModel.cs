@@ -113,7 +113,7 @@ public class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// 状態更新 (20ms間隔で呼ばれる)
+    /// 状態更新 (100ms間隔で呼ばれる)
     /// </summary>
     public void Update()
     {

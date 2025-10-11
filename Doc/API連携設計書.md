@@ -25,9 +25,9 @@ Traincrew APIから取得する情報は以下の通りです。
 
 | 情報 | データ型 | 説明 | 更新頻度 |
 |-----|---------|-----|---------|
-| ゲーム状態 | 列挙型 | 実行中/ポーズ中/終了 | 20ms |
-| 在線軌道回路リスト | 文字列リスト | 列車が在線している軌道回路ID一覧 | 20ms |
-| 列番 | 文字列 | 現在操作中の列車の列番 | 20ms |
+| ゲーム状態 | 列挙型 | 実行中/ポーズ中/終了 | 100ms |
+| 在線軌道回路リスト | 文字列リスト | 列車が在線している軌道回路ID一覧 | 100ms |
+| 列番 | 文字列 | 現在操作中の列車の列番 | 100ms |
 
 ---
 
@@ -354,7 +354,7 @@ public class TraincrewApiClient
 
 ### 4.1 ポーリング方式
 
-本アプリケーションでは、20ms間隔でAPIをポーリングして状態を取得します。
+本アプリケーションでは、100ms間隔でAPIをポーリングして状態を取得します。
 
 ```csharp
 public class ModeManager
@@ -372,7 +372,7 @@ public class ModeManager
         _pollingTimer.Tick += OnPollingTick;
         _pollingTimer.Start();
 
-        _logger.Info("API polling started (20ms interval)");
+        _logger.Info("API polling started (100ms interval)");
     }
 
     private void OnPollingTick(object sender, EventArgs e)
@@ -441,7 +441,7 @@ public class ApplicationBootstrap
 
 #### 5.1.1 取得タイミング
 
-- 20ms間隔のポーリング
+- 100ms間隔のポーリング
 
 #### 5.1.2 使用箇所
 
@@ -460,7 +460,7 @@ public class ApplicationBootstrap
 
 #### 5.2.1 取得タイミング
 
-- 20ms間隔のポーリング
+- 100ms間隔のポーリング
 
 #### 5.2.2 データ形式
 
@@ -512,7 +512,7 @@ public StationInfo FindStation(List<string> occupiedTracks)
 
 #### 5.3.1 取得タイミング
 
-- 20ms間隔のポーリング
+- 100ms間隔のポーリング
 
 #### 5.3.2 データ形式
 
@@ -587,7 +587,7 @@ Application   Bootstrap   ApiClient   TraincrewApi   ModeManager
     │             │─Start                                 │
     │             │  Polling()─────────────────────────→  │
     │             │           │             │             │
-    │             │           │             │             │◄─Timer(20ms)
+    │             │           │             │             │◄─Timer(100ms)
     │             │           │             │             │
     │             │           │◄────GetGameStatus()───────│
     │             │           │─────────────→│            │
@@ -671,7 +671,7 @@ private int GetRetryDelay(int attempt)
 
 ### 8.1 ポーリング間隔
 
-- **現在**: 20ms (50Hz)
+- **現在**: 100ms (10Hz)
 - **理由**: リアルタイム性と負荷のバランス
 - **将来拡張**: WebSocket方式でプッシュ通知に変更すれば、ポーリング不要
 
