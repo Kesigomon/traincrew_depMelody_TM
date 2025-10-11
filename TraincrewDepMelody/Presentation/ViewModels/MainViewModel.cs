@@ -50,8 +50,8 @@ public class MainViewModel : INotifyPropertyChanged
             // 依存関係注入
             _audioPlayer = new AudioPlayer(_loggerFactory.CreateLogger<AudioPlayer>());
             _audioRepository = new AudioRepository(_loggerFactory);
-            var mockApi = new MockTraincrewApi();
-            var apiClient = new TraincrewApiClient(mockApi, _loggerFactory.CreateLogger<TraincrewApiClient>(), _settingsManager.Settings.ApiEndpoint);
+            var api = new TraincrewApi();
+            var apiClient = new TraincrewApiClient(api, _loggerFactory.CreateLogger<TraincrewApiClient>(), _settingsManager.Settings.ApiEndpoint);
             var stationRepository = new StationRepository(_loggerFactory.CreateLogger<StationRepository>());
 
             // 初期化
