@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using TraincrewDepMelody.Infrastructure.Input;
 using TraincrewDepMelody.Presentation.ViewModels;
 using TraincrewDepMelody.Presentation.Views;
 
@@ -13,6 +14,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _updateTimer;
+    private readonly GlobalKeyboardHook _keyboardHook;
 
     public MainWindow()
     {
@@ -29,9 +31,14 @@ public partial class MainWindow : Window
         _updateTimer.Tick += (s, e) => _viewModel.Update();
         _updateTimer.Start();
 
-        // キーボード入力
-        KeyDown += OnKeyDown;
-        KeyUp += OnKeyUp;
+        // グローバルキーボードフック初期化
+        _keyboardHook = new GlobalKeyboardHook();
+        _keyboardHook.KeyDown += OnGlobalKeyDown;
+        _keyboardHook.KeyUp += OnGlobalKeyUp;
+        _keyboardHook.Start();
+
+        // ウィンドウが閉じられるときにフックを停止
+        Closed += (s, e) => _keyboardHook.Dispose();
 
         // ウィンドウドラッグ可能
         MouseLeftButtonDown += (s, e) =>
@@ -68,24 +75,24 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// キーダウン
+    /// グローバルキーダウン（ウィンドウにフォーカスがなくても検知）
     /// </summary>
-    private void OnKeyDown(object sender, KeyEventArgs e)
+    private void OnGlobalKeyDown(object? sender, GlobalKeyEventArgs e)
     {
-        if (e is { Key: Key.Insert, IsRepeat: false })
+        if (e is { Key: Key.End, IsRepeat: false })
         {
-            _viewModel.OnButtonPressed();
+            Dispatcher.Invoke(() => _viewModel.OnButtonPressed());
         }
     }
 
     /// <summary>
-    /// キーアップ
+    /// グローバルキーアップ（ウィンドウにフォーカスがなくても検知）
     /// </summary>
-    private void OnKeyUp(object sender, KeyEventArgs e)
+    private void OnGlobalKeyUp(object? sender, GlobalKeyEventArgs e)
     {
-        if (e.Key == Key.Insert)
+        if (e.Key == Key.End)
         {
-            _viewModel.OnButtonReleased();
+            Dispatcher.Invoke(() => _viewModel.OnButtonReleased());
         }
     }
 
