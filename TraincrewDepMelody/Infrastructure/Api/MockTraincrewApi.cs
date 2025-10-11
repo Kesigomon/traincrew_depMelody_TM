@@ -12,7 +12,7 @@ public class MockTraincrewApi : ITraincrewApi
     private List<string> _occupiedTracks = new List<string>();
     private string _trainNumber = "1262";
 
-    public bool Connect(string endpoint)
+    public bool Connect()
     {
         _isConnected = true;
         return true;
