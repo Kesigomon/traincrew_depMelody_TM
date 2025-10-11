@@ -15,8 +15,8 @@ public class StationMode : IMode
     private readonly AudioRepository _audioRepository;
     private readonly ApplicationState _state;
     private readonly ILogger<StationMode> _logger;
+    private readonly Action _onStationMelodyNotFound;
 
-    private bool _isFirstPress = true;
     private PlaybackState _playbackState = PlaybackState.Idle;
     #endregion
 
@@ -25,12 +25,14 @@ public class StationMode : IMode
         AudioPlayer audioPlayer,
         AudioRepository audioRepository,
         ApplicationState state,
-        ILogger<StationMode> logger)
+        ILogger<StationMode> logger,
+        Action onStationMelodyNotFound)
     {
         _audioPlayer = audioPlayer;
         _audioRepository = audioRepository;
         _state = state;
         _logger = logger;
+        _onStationMelodyNotFound = onStationMelodyNotFound;
 
         // 再生終了イベント登録
         _audioPlayer.PlaybackFinished += OnPlaybackFinished;
@@ -41,7 +43,6 @@ public class StationMode : IMode
     public void OnEnter()
     {
         _logger.LogInformation("Enter StationMode");
-        _isFirstPress = true;
         _playbackState = PlaybackState.Idle;
     }
 
@@ -54,36 +55,14 @@ public class StationMode : IMode
 
     public void OnButtonPressed()
     {
-        if (_isFirstPress)
-        {
-            _logger.LogInformation("StationMode: First button press");
-            _isFirstPress = false;
-
-            // 駅メロディー再生
-            PlayStationMelody();
-        }
-        else
-        {
-            // 2回目以降の押下は車両モードの動作
-            _logger.LogInformation("StationMode: Additional button press (vehicle mode behavior)");
-
-            // 車両チャンネルを停止
-            _audioPlayer.Stop("vehicle");
-
-            // 車両メロディーをループ再生
-            PlayVehicleMelody();
-        }
+        _logger.LogInformation("StationMode: Button pressed");
+        // 駅メロディー再生
+        PlayStationMelody();
     }
 
     public void OnButtonReleased()
     {
-        // 駅モードではリリースを無視 (初回のみ)
-        // 2回目以降は車両モードの動作
-        if (!_isFirstPress && _playbackState == PlaybackState.PlayingMelodyLoop)
-        {
-            _audioPlayer.Stop("vehicle");
-            PlayVehicleDoorClosing();
-        }
+        // 駅モードではリリースを無視
     }
 
     public void Update()
@@ -107,11 +86,11 @@ public class StationMode : IMode
 
         var melodyPath = _audioRepository.GetStationMelody(station.StationName, station.Platform, _state.Direction);
 
-        // 駅メロディーが見つからない場合は、車両メロディーを再生
+        // 駅メロディーが見つからない場合は、ModeManagerに通知
         if (melodyPath == null)
         {
-            _logger.LogInformation("Station melody not found, switching to vehicle melody");
-            PlayVehicleMelody();
+            _logger.LogInformation("Station melody not found, notifying ModeManager");
+            _onStationMelodyNotFound?.Invoke();
             return;
         }
 
@@ -137,37 +116,16 @@ public class StationMode : IMode
         // 駅アナウンスが見つからない場合は車両アナウンスを再生
         if (announcementPath == null)
         {
-            _logger.LogInformation("Station door closing not found, switching to vehicle door closing");
-            PlayVehicleDoorClosing();
+            _logger.LogInformation("Station door closing not found, using vehicle door closing");
+            var vehicleAnnouncementPath = _audioRepository.GetVehicleDoorClosing();
+            _logger.LogInformation($"Playing vehicle door closing: {vehicleAnnouncementPath}");
+            _audioPlayer.Play("station", vehicleAnnouncementPath, loop: false);
+            _playbackState = PlaybackState.PlayingAnnouncement;
             return;
         }
 
         _logger.LogInformation($"Playing station door closing: {announcementPath}");
         _audioPlayer.Play("station", announcementPath, loop: false);
-        _playbackState = PlaybackState.PlayingAnnouncement;
-    }
-
-    /// <summary>
-    /// 車両メロディー再生
-    /// </summary>
-    private void PlayVehicleMelody()
-    {
-        var melodyPath = _audioRepository.GetVehicleMelody(_state.Direction);
-
-        _logger.LogInformation($"Playing vehicle melody: {melodyPath}");
-        _audioPlayer.Play("vehicle", melodyPath, loop: true);
-        _playbackState = PlaybackState.PlayingMelodyLoop;
-    }
-
-    /// <summary>
-    /// 車両ドア締まりますアナウンス再生
-    /// </summary>
-    private void PlayVehicleDoorClosing()
-    {
-        var announcementPath = _audioRepository.GetVehicleDoorClosing();
-
-        _logger.LogInformation($"Playing vehicle door closing: {announcementPath}");
-        _audioPlayer.Play("vehicle", announcementPath, loop: false);
         _playbackState = PlaybackState.PlayingAnnouncement;
     }
 
@@ -194,7 +152,6 @@ public class StationMode : IMode
     {
         Idle,
         PlayingMelody,
-        PlayingMelodyLoop,
         PlayingAnnouncement
     }
     #endregion

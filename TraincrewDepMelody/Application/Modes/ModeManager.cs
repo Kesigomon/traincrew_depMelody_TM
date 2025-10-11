@@ -26,6 +26,7 @@ public class ModeManager
     private readonly ILoggerFactory _loggerFactory;
 
     private StationInfo? _previousStation;
+    private bool _isFirstPressInStationMode = true;
     #endregion
 
     #region プロパティ
@@ -50,7 +51,12 @@ public class ModeManager
         _logger = loggerFactory.CreateLogger<ModeManager>();
 
         // モード初期化
-        _stationMode = new StationMode(_audioPlayer, _audioRepository, _state, _loggerFactory.CreateLogger<StationMode>());
+        _stationMode = new StationMode(
+            _audioPlayer,
+            _audioRepository,
+            _state,
+            _loggerFactory.CreateLogger<StationMode>(),
+            OnStationMelodyNotFound);
         _vehicleMode = new VehicleMode(_audioPlayer, _audioRepository, _state, _loggerFactory.CreateLogger<VehicleMode>());
 
         // 初期モードは車両モード
@@ -68,7 +74,23 @@ public class ModeManager
         // 駅モード切替判定
         if (_currentMode is VehicleMode && _state.IsAtStation)
         {
+            _logger.LogInformation("At station, switching to StationMode");
             SwitchMode(_stationMode);
+            _isFirstPressInStationMode = true;
+        }
+        // 駅モード中の2回目以降のボタン押下は車両モードに切り替え
+        else if (_currentMode is StationMode)
+        {
+            if (_isFirstPressInStationMode)
+            {
+                _logger.LogInformation("StationMode: First button press");
+                _isFirstPressInStationMode = false;
+            }
+            else
+            {
+                _logger.LogInformation("StationMode: Second button press, switching to VehicleMode");
+                SwitchMode(_vehicleMode);
+            }
         }
 
         _currentMode.OnButtonPressed();
@@ -134,6 +156,18 @@ public class ModeManager
 
     #region プライベートメソッド
     /// <summary>
+    /// 駅メロディが見つからなかった場合の処理
+    /// </summary>
+    private void OnStationMelodyNotFound()
+    {
+        _logger.LogInformation("Station melody not found, switching to VehicleMode");
+        SwitchMode(_vehicleMode);
+        _isFirstPressInStationMode = true; // フラグをリセット
+        // 車両モードで再生を開始
+        _vehicleMode.OnButtonPressed();
+    }
+
+    /// <summary>
     /// 上下線判定
     /// </summary>
     private Direction DetermineDirection(string trainNumber)
@@ -173,6 +207,7 @@ public class ModeManager
             if (_currentMode is StationMode)
             {
                 SwitchMode(_vehicleMode);
+                _isFirstPressInStationMode = true; // フラグをリセット
             }
         }
 
@@ -207,6 +242,7 @@ public class ModeManager
                 if (_currentMode is StationMode)
                 {
                     SwitchMode(_vehicleMode);
+                    _isFirstPressInStationMode = true; // フラグをリセット
                 }
                 break;
         }
