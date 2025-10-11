@@ -7,7 +7,7 @@ namespace TraincrewDepMelody.Application.Audio;
 /// <summary>
 /// 音声再生クラス(複数MediaPlayerインスタンスを管理)
 /// </summary>
-public class AudioPlayer : IDisposable
+public class AudioPlayer : IAudioPlayer, IDisposable
 {
     #region フィールド
     private readonly Dictionary<string, AudioChannel> _channels;

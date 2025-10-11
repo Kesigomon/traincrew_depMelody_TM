@@ -10,7 +10,7 @@ namespace TraincrewDepMelody.Infrastructure.Repositories;
 /// <summary>
 /// 駅・番線リポジトリ
 /// </summary>
-public class StationRepository
+public class StationRepository : IStationRepository
 {
     #region フィールド
     private Dictionary<StationPlatform, HashSet<string>> _stationTracks;

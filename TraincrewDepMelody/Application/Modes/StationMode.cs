@@ -11,8 +11,8 @@ namespace TraincrewDepMelody.Application.Modes;
 public class StationMode : IMode
 {
     #region フィールド
-    private readonly AudioPlayer _audioPlayer;
-    private readonly AudioRepository _audioRepository;
+    private readonly IAudioPlayer _audioPlayer;
+    private readonly IAudioRepository _audioRepository;
     private readonly ApplicationState _state;
     private readonly ILogger<StationMode> _logger;
     private readonly Action _onStationMelodyNotFound;
@@ -22,8 +22,8 @@ public class StationMode : IMode
 
     #region コンストラクタ
     public StationMode(
-        AudioPlayer audioPlayer,
-        AudioRepository audioRepository,
+        IAudioPlayer audioPlayer,
+        IAudioRepository audioRepository,
         ApplicationState state,
         ILogger<StationMode> logger,
         Action onStationMelodyNotFound)

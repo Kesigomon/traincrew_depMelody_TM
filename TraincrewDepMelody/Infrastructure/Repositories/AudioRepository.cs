@@ -8,7 +8,7 @@ namespace TraincrewDepMelody.Infrastructure.Repositories;
 /// <summary>
 /// 音声ファイルリポジトリ
 /// </summary>
-public class AudioRepository
+public class AudioRepository : IAudioRepository
 {
     #region フィールド
     private Dictionary<AudioKey, string> _audioFiles;

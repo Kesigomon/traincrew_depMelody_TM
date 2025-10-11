@@ -17,10 +17,10 @@ public class ModeManager
     private readonly StationMode _stationMode;
     private readonly VehicleMode _vehicleMode;
 
-    private readonly AudioPlayer _audioPlayer;
-    private readonly AudioRepository _audioRepository;
+    private readonly IAudioPlayer _audioPlayer;
+    private readonly IAudioRepository _audioRepository;
     private readonly TraincrewApiClient _apiClient;
-    private readonly StationRepository _stationRepository;
+    private readonly IStationRepository _stationRepository;
     private readonly ApplicationState _state;
     private readonly ILogger<ModeManager> _logger;
     private readonly ILoggerFactory _loggerFactory;
@@ -35,10 +35,10 @@ public class ModeManager
 
     #region コンストラクタ
     public ModeManager(
-        AudioPlayer audioPlayer,
-        AudioRepository audioRepository,
+        IAudioPlayer audioPlayer,
+        IAudioRepository audioRepository,
         TraincrewApiClient apiClient,
-        StationRepository stationRepository,
+        IStationRepository stationRepository,
         ApplicationState state,
         ILoggerFactory loggerFactory)
     {
