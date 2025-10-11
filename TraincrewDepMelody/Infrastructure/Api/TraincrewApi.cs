@@ -107,7 +107,7 @@ public class TraincrewApi : ITraincrewApi, IDisposable
                     _webSocket = new();
                     return;
                 }
-                catch (ObjectDisposedException)
+                catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
                 {
                     _webSocket.Dispose();
                     _webSocket = new();
