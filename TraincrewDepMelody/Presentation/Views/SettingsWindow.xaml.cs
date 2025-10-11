@@ -32,7 +32,6 @@ public partial class SettingsWindow : Window
     /// </summary>
     private void LoadSettings()
     {
-        EndpointTextBox.Text = _settings.ApiEndpoint;
         VolumeSlider.Value = _settings.Volume * 100;
         EnableKeyboardCheckBox.IsChecked = _settings.EnableKeyboard;
 
@@ -175,7 +174,6 @@ public partial class SettingsWindow : Window
     private void OnOkClick(object sender, RoutedEventArgs e)
     {
         // 設定を保存
-        _settings.ApiEndpoint = EndpointTextBox.Text;
         _settings.Volume = VolumeSlider.Value / 100.0;
         _settings.EnableKeyboard = EnableKeyboardCheckBox.IsChecked ?? true;
 

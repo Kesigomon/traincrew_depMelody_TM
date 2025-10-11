@@ -5,7 +5,6 @@ namespace TraincrewDepMelody.Models;
 /// </summary>
 public class AppSettings
 {
-    public string ApiEndpoint { get; set; } = "http://localhost:8080";
     public string CurrentProfile { get; set; } = "profiles/profile_default.csv";
     public string ProfileFile { get; set; } = "profile_default.csv";
     public string StationDefinition { get; set; } = "stations/stations.csv";

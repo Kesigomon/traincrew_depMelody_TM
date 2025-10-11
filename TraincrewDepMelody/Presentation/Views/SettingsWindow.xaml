@@ -18,14 +18,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- APIエンドポイント設定 -->
-        <GroupBox Header="API設定" Grid.Row="0" Margin="0,0,0,15">
-            <StackPanel Margin="10">
-                <TextBlock Text="APIエンドポイント:" Margin="0,0,0,5"/>
-                <TextBox x:Name="EndpointTextBox" Height="25"/>
-            </StackPanel>
-        </GroupBox>
-
         <!-- プロファイル選択 -->
         <GroupBox Header="プロファイル設定" Grid.Row="1" Margin="0,0,0,15">
             <StackPanel Margin="10">

@@ -12,7 +12,6 @@ public class TraincrewApiClient
     #region フィールド
     private readonly ITraincrewApi _api;
     private readonly ILogger<TraincrewApiClient> _logger;
-    private readonly string _endpoint;
 
     // リトライ設定
     private const int MaxRetryCount = 3;
@@ -21,11 +20,10 @@ public class TraincrewApiClient
     #endregion
 
     #region コンストラクタ
-    public TraincrewApiClient(ITraincrewApi api, ILogger<TraincrewApiClient> logger, string endpoint)
+    public TraincrewApiClient(ITraincrewApi api, ILogger<TraincrewApiClient> logger)
     {
         _api = api;
         _logger = logger;
-        _endpoint = endpoint;
     }
     #endregion
 
@@ -55,7 +53,7 @@ public class TraincrewApiClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception during API connection: {Endpoint}", _endpoint);
+            _logger.LogError(ex, "Exception during API connection");
             return false;
         }
     }

@@ -51,7 +51,7 @@ public class MainViewModel : INotifyPropertyChanged
             _audioPlayer = new AudioPlayer(_loggerFactory.CreateLogger<AudioPlayer>());
             _audioRepository = new AudioRepository(_loggerFactory);
             var api = new TraincrewApi();
-            var apiClient = new TraincrewApiClient(api, _loggerFactory.CreateLogger<TraincrewApiClient>(), _settingsManager.Settings.ApiEndpoint);
+            var apiClient = new TraincrewApiClient(api, _loggerFactory.CreateLogger<TraincrewApiClient>());
             var stationRepository = new StationRepository(_loggerFactory.CreateLogger<StationRepository>());
 
             // 初期化
@@ -142,7 +142,6 @@ public class MainViewModel : INotifyPropertyChanged
             }
 
             // 設定プロパティをコピー
-            _settingsManager.Settings.ApiEndpoint = newSettings.ApiEndpoint;
             _settingsManager.Settings.Volume = newSettings.Volume;
             _settingsManager.Settings.ProfileFile = newSettings.ProfileFile;
             _settingsManager.Settings.Topmost = newSettings.Topmost;
