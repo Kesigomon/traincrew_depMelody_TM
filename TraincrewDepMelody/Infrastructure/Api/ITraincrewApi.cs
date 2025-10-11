@@ -26,7 +26,7 @@ public interface ITraincrewApi
     /// <summary>
     /// データ取得(API通信を実行し、内部にデータを保持)
     /// </summary>
-    void FetchData();
+    Task FetchData();
 
     /// <summary>
     /// ゲーム状態取得(FetchDataで取得した値を返す)

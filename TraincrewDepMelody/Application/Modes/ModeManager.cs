@@ -85,12 +85,12 @@ public class ModeManager
     /// <summary>
     /// 状態更新
     /// </summary>
-    public void Update()
+    public async void Update()
     {
         // API情報取得
         try
         {
-            _apiClient.FetchData();
+            await _apiClient.FetchData();
 
             _state.GameStatus = _apiClient.GetGameStatus();
             _state.OccupiedTracks = _apiClient.GetTrackCircuits();

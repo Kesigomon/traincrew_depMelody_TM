@@ -95,11 +95,11 @@ public class TraincrewApiClient
     /// <summary>
     /// データ取得 (リトライ処理付き)
     /// </summary>
-    public void FetchData()
+    public async Task FetchData()
     {
-        ExecuteWithRetry(() =>
+        await ExecuteWithRetryAsync(async () =>
         {
-            _api.FetchData();
+            await _api.FetchData();
             return true;
         }, false);
     }
@@ -180,6 +180,52 @@ public class TraincrewApiClient
                 {
                     // 最後の試行以外はリトライ
                     Thread.Sleep(RetryDelayMs);
+                }
+                else
+                {
+                    // 最大リトライ回数に達した
+                    _logger.LogError("API call failed after {MaxRetry} attempts. Returning default value.", MaxRetryCount);
+
+                    // 連続失敗が一定数を超えたら警告
+                    if (_consecutiveFailures >= 5)
+                    {
+                        _logger.LogError("API connection unstable: {ConsecutiveFailures} consecutive failures", _consecutiveFailures);
+                    }
+
+                    return defaultValue;
+                }
+            }
+        }
+
+        return defaultValue;
+    }
+
+    /// <summary>
+    /// リトライ処理を伴う非同期API呼び出し
+    /// </summary>
+    private async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> apiCall, T defaultValue)
+    {
+        for (var attempt = 0; attempt < MaxRetryCount; attempt++)
+        {
+            try
+            {
+                var result = await apiCall();
+
+                // 成功したら連続失敗カウントをリセット
+                _consecutiveFailures = 0;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _consecutiveFailures++;
+
+                _logger.LogWarning("API call failed (attempt {Attempt}/{MaxRetry}): {Message}", attempt + 1, MaxRetryCount, ex.Message);
+
+                if (attempt < MaxRetryCount - 1)
+                {
+                    // 最後の試行以外はリトライ
+                    await Task.Delay(RetryDelayMs);
                 }
                 else
                 {

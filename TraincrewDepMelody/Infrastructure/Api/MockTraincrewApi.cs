@@ -31,10 +31,11 @@ public class MockTraincrewApi : ITraincrewApi
     /// <summary>
     /// データ取得(モックなので何もしない)
     /// </summary>
-    public void FetchData()
+    public Task FetchData()
     {
         // モック実装では何もしない
         // 実際のAPI実装では、ここでAPI通信を行い内部にデータを保持する
+        return Task.CompletedTask;
     }
 
     /// <summary>
