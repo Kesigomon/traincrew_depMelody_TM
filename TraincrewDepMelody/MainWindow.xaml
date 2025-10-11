@@ -6,40 +6,42 @@
         xmlns:local="clr-namespace:TraincrewDepMelody"
         mc:Ignorable="d"
         Title="乗降促進アプリ" Height="350" Width="350"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent"
-        ResizeMode="CanMinimize">
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize">
     <Grid x:Name="MainGrid">
-        <!-- 丸いボタン -->
-        <Ellipse x:Name="MainButton"
-                 Width="300" Height="300"
-                 Fill="#FF4CAF50"
-                 Stroke="#FF388E3C"
-                 StrokeThickness="5"
-                 Cursor="Hand"
-                 MouseDown="OnButtonMouseDown"
-                 MouseUp="OnButtonMouseUp">
-            <Ellipse.Effect>
-                <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.5"/>
-            </Ellipse.Effect>
-            <!-- 右クリックメニュー -->
-            <Ellipse.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="設定" Click="OnSettingsClick"/>
-                    <Separator/>
-                    <MenuItem Header="終了" Click="OnExitClick"/>
-                </ContextMenu>
-            </Ellipse.ContextMenu>
-        </Ellipse>
+        <Viewbox Stretch="Uniform" Margin="10">
+            <Grid Width="300" Height="300">
+                <!-- 丸いボタン -->
+                <Ellipse x:Name="MainButton"
+                         Width="300" Height="300"
+                         Fill="Gray"
+                         Stroke="Black"
+                         StrokeThickness="5"
+                         Cursor="Hand"
+                         MouseDown="OnButtonMouseDown"
+                         MouseUp="OnButtonMouseUp">
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.5"/>
+                    </Ellipse.Effect>
+                    <!-- 右クリックメニュー -->
+                    <Ellipse.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="設定" Click="OnSettingsClick"/>
+                            <Separator/>
+                            <MenuItem Header="終了" Click="OnExitClick"/>
+                        </ContextMenu>
+                    </Ellipse.ContextMenu>
+                </Ellipse>
 
-        <!-- ボタン上のテキスト -->
-        <TextBlock Text="乗降促進"
-                   FontSize="32"
-                   FontWeight="Bold"
-                   Foreground="White"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   IsHitTestVisible="False"/>
+                <!-- ボタン上のテキスト -->
+                <TextBlock Text="乗降促進"
+                           FontSize="32"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsHitTestVisible="False"/>
+            </Grid>
+        </Viewbox>
     </Grid>
 </Window>
