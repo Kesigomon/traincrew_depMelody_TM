@@ -56,7 +56,8 @@ public class TraincrewApi : ITraincrewApi, IDisposable
     private bool _isConnected;
     private string _trainNumber = string.Empty;
     private ClientWebSocket _webSocket = new();
-    private List<string> _trackCircuits = []; 
+    private List<string> _trackCircuits = [];
+    private readonly SemaphoreSlim _fetchDataSemaphore = new(1, 1); 
     public bool Connect()
     {
         TrainCrewInput.Init();
@@ -77,38 +78,51 @@ public class TraincrewApi : ITraincrewApi, IDisposable
 
     public async Task FetchData()
     {
-        TrainCrewInput.RequestData(DataRequest.Signal);
-        var trainState = TrainCrewInput.GetTrainState();
-        _trainNumber = trainState.diaName;
-        if (TrainCrewInput.gameState.gameScreen
-            is not (GameScreen.MainGame or GameScreen.MainGame_Pause))
+        // 既に実行中の場合は待たずに即座にreturn
+        if (!await _fetchDataSemaphore.WaitAsync(0))
         {
-           return; 
+            return;
         }
 
-        while (_webSocket.State != WebSocketState.Open)
+        try
         {
-            try
+            TrainCrewInput.RequestData(DataRequest.Signal);
+            var trainState = TrainCrewInput.GetTrainState();
+            _trainNumber = trainState.diaName;
+            if (TrainCrewInput.gameState.gameScreen
+                is not (GameScreen.MainGame or GameScreen.MainGame_Pause))
             {
-                await _webSocket.ConnectAsync(new(ConnectUri), CancellationToken.None);
+               return;
             }
-            catch (WebSocketException)
+
+            while (_webSocket.State != WebSocketState.Open)
             {
-                _webSocket.Dispose();
-                _webSocket = new();
-                return;
+                try
+                {
+                    await _webSocket.ConnectAsync(new(ConnectUri), CancellationToken.None);
+                }
+                catch (WebSocketException)
+                {
+                    _webSocket.Dispose();
+                    _webSocket = new();
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    _webSocket.Dispose();
+                    _webSocket = new();
+                }
             }
-            catch (ObjectDisposedException)
+
+            if (GetGameStatus() == GameStatus.Running && _webSocket.State == WebSocketState.Open)
             {
-                _webSocket.Dispose();
-                _webSocket = new();
+                await SendMessages();
+                await ReceiveMessages(_trainNumber);
             }
         }
-
-        if (GetGameStatus() == GameStatus.Running && _webSocket.State == WebSocketState.Open)
+        finally
         {
-            await SendMessages();
-            await ReceiveMessages(_trainNumber);
+            _fetchDataSemaphore.Release();
         }
     }
 
@@ -211,5 +225,6 @@ public class TraincrewApi : ITraincrewApi, IDisposable
     {
         TrainCrewInput.Dispose();
         _webSocket.Dispose();
+        _fetchDataSemaphore.Dispose();
     }
 }
