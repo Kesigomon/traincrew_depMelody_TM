@@ -1,0 +1,10 @@
+種別,駅名,番線,上下,ファイルパス
+車両メロディー,,,上り,sounds/vehicle/melody_up.mp3
+車両メロディー,,,下り,sounds/vehicle/melody_down.mp3
+車両ドア締まります,,,,sounds/door/door_train.mp3
+駅メロディー,サンプル駅,1,,sounds/station/sample_01.mp3
+駅メロディー,サンプル駅,2,,sounds/station/sample_02.mp3
+駅メロディー,テスト駅,1,,sounds/station/test_01.mp3
+駅メロディー,テスト駅,2,,sounds/station/test_02.mp3
+駅ドア締まります,,,奇数,sounds/door/door_odd.mp3
+駅ドア締まります,,,偶数,sounds/door/door_even.mp3
