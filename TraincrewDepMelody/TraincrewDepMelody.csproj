@@ -15,4 +15,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="TrainCrewInput">
+      <HintPath>DLL\TrainCrewInput.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
