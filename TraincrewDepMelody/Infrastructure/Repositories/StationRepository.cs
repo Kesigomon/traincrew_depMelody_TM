@@ -5,129 +5,128 @@ using CsvHelper;
 using Microsoft.Extensions.Logging;
 using TraincrewDepMelody.Models;
 
-namespace TraincrewDepMelody.Infrastructure.Repositories
+namespace TraincrewDepMelody.Infrastructure.Repositories;
+
+/// <summary>
+/// 駅・番線リポジトリ
+/// </summary>
+public class StationRepository
 {
-    /// <summary>
-    /// 駅・番線リポジトリ
-    /// </summary>
-    public class StationRepository
+    #region フィールド
+    private Dictionary<StationPlatform, HashSet<string>> _stationTracks;
+    private readonly ILogger<StationRepository> _logger;
+    #endregion
+
+    #region コンストラクタ
+    public StationRepository(ILogger<StationRepository> logger)
     {
-        #region フィールド
-        private Dictionary<StationPlatform, HashSet<string>> _stationTracks;
-        private readonly ILogger<StationRepository> _logger;
-        #endregion
+        _logger = logger;
+        _stationTracks = new Dictionary<StationPlatform, HashSet<string>>();
+    }
+    #endregion
 
-        #region コンストラクタ
-        public StationRepository(ILogger<StationRepository> logger)
+    #region パブリックメソッド
+    /// <summary>
+    /// CSVから駅定義読み込み
+    /// </summary>
+    public void LoadFromCsv(string filePath)
+    {
+        try
         {
-            _logger = logger;
-            _stationTracks = new Dictionary<StationPlatform, HashSet<string>>();
-        }
-        #endregion
+            _logger.LogInformation($"Loading station definition: {filePath}");
 
-        #region パブリックメソッド
-        /// <summary>
-        /// CSVから駅定義読み込み
-        /// </summary>
-        public void LoadFromCsv(string filePath)
-        {
-            try
+            _stationTracks.Clear();
+
+            using var reader = new StreamReader(filePath, Encoding.UTF8);
+            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+
+            csv.Read();
+            csv.ReadHeader();
+
+            while (csv.Read())
             {
-                _logger.LogInformation($"Loading station definition: {filePath}");
+                var stationName = csv.GetField<string>("駅名");
+                var platform = csv.GetField<int>("番線");
 
-                _stationTracks.Clear();
+                var tracks = new HashSet<string>();
 
-                using var reader = new StreamReader(filePath, Encoding.UTF8);
-                using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-
-                csv.Read();
-                csv.ReadHeader();
-
-                while (csv.Read())
+                // 軌道回路列を可変長で読み込み
+                for (int i = 1; ; i++)
                 {
-                    var stationName = csv.GetField<string>("駅名");
-                    var platform = csv.GetField<int>("番線");
+                    var columnName = $"軌道回路{i}";
 
-                    var tracks = new HashSet<string>();
-
-                    // 軌道回路列を可変長で読み込み
-                    for (int i = 1; ; i++)
+                    if (csv.HeaderRecord == null || !csv.HeaderRecord.Contains(columnName))
                     {
-                        var columnName = $"軌道回路{i}";
-
-                        if (csv.HeaderRecord == null || !csv.HeaderRecord.Contains(columnName))
-                        {
-                            break;
-                        }
-
-                        var track = csv.GetField<string>(columnName);
-
-                        if (!string.IsNullOrWhiteSpace(track))
-                        {
-                            tracks.Add(track);
-                        }
+                        break;
                     }
 
-                    if (tracks.Count == 0)
+                    var track = csv.GetField<string>(columnName);
+
+                    if (!string.IsNullOrWhiteSpace(track))
                     {
-                        _logger.LogWarning($"Skipping station {stationName} platform {platform}: no track circuits");
-                        continue;
+                        tracks.Add(track);
                     }
-
-                    var key = new StationPlatform
-                    {
-                        StationName = stationName ?? string.Empty,
-                        Platform = platform
-                    };
-
-                    _stationTracks[key] = tracks;
-
-                    _logger.LogInformation($"  {stationName} {platform}番線: {string.Join(", ", tracks)}");
                 }
 
-                _logger.LogInformation($"Loaded {_stationTracks.Count} station platforms");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Failed to load station definition: {filePath}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// 在線駅判定
-        /// </summary>
-        public StationInfo? FindStation(List<string> occupiedTracks)
-        {
-            if (occupiedTracks == null || occupiedTracks.Count == 0)
-            {
-                return null;
-            }
-
-            var occupiedSet = new HashSet<string>(occupiedTracks);
-
-            foreach (var (stationPlatform, trackSet) in _stationTracks)
-            {
-                if (occupiedSet.SetEquals(trackSet))
+                if (tracks.Count == 0)
                 {
-                    return new StationInfo
-                    {
-                        StationName = stationPlatform.StationName,
-                        Platform = stationPlatform.Platform
-                    };
+                    _logger.LogWarning($"Skipping station {stationName} platform {platform}: no track circuits");
+                    continue;
                 }
+
+                var key = new StationPlatform
+                {
+                    StationName = stationName ?? string.Empty,
+                    Platform = platform
+                };
+
+                _stationTracks[key] = tracks;
+
+                _logger.LogInformation($"  {stationName} {platform}番線: {string.Join(", ", tracks)}");
             }
 
+            _logger.LogInformation($"Loaded {_stationTracks.Count} station platforms");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to load station definition: {filePath}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 在線駅判定
+    /// </summary>
+    public StationInfo? FindStation(List<string> occupiedTracks)
+    {
+        if (occupiedTracks == null || occupiedTracks.Count == 0)
+        {
             return null;
         }
 
-        /// <summary>
-        /// 駅在線判定
-        /// </summary>
-        public bool IsAtStation(List<string> occupiedTracks)
+        var occupiedSet = new HashSet<string>(occupiedTracks);
+
+        foreach (var (stationPlatform, trackSet) in _stationTracks)
         {
-            return FindStation(occupiedTracks) != null;
+            if (occupiedSet.SetEquals(trackSet))
+            {
+                return new StationInfo
+                {
+                    StationName = stationPlatform.StationName,
+                    Platform = stationPlatform.Platform
+                };
+            }
         }
-        #endregion
+
+        return null;
     }
+
+    /// <summary>
+    /// 駅在線判定
+    /// </summary>
+    public bool IsAtStation(List<string> occupiedTracks)
+    {
+        return FindStation(occupiedTracks) != null;
+    }
+    #endregion
 }

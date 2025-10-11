@@ -1,14 +1,13 @@
-namespace TraincrewDepMelody.Application.Modes
+namespace TraincrewDepMelody.Application.Modes;
+
+/// <summary>
+/// モードインターフェース
+/// </summary>
+public interface IMode
 {
-    /// <summary>
-    /// モードインターフェース
-    /// </summary>
-    public interface IMode
-    {
-        void OnEnter();
-        void OnExit();
-        void OnButtonPressed();
-        void OnButtonReleased();
-        void Update();
-    }
+    void OnEnter();
+    void OnExit();
+    void OnButtonPressed();
+    void OnButtonReleased();
+    void Update();
 }
