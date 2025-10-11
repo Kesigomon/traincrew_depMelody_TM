@@ -172,7 +172,8 @@ public class TraincrewApiClient
             {
                 _consecutiveFailures++;
 
-                _logger.LogWarning("API call failed (attempt {Attempt}/{MaxRetry}): {Message}", attempt + 1, MaxRetryCount, ex.Message);
+                _logger.LogWarning("API call failed (attempt {Attempt}/{MaxRetry}): {Message}\n{StackTrace}",
+                    attempt + 1, MaxRetryCount, ex.Message, ex.StackTrace);
 
                 if (attempt < MaxRetryCount - 1)
                 {
