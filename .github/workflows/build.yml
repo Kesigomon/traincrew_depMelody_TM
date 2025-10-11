@@ -61,7 +61,7 @@ jobs:
       - name: Set Zip File Name
         run: |
           echo "APP_VERSION=${{ needs.calc_version.outputs.VERSION }}" >> $GITHUB_ENV
-          ZIP_FILE_BASE=${{ needs.calc_version.outputs.APP_PREFIX }}-${{ (matrix.standalone && '-standalone') || '' }}
+          ZIP_FILE_BASE=${{ needs.calc_version.outputs.APP_PREFIX }}${{ (matrix.standalone && '-standalone') || '' }}
           echo "ZIP_FILE_BASE=${ZIP_FILE_BASE}" >> $GITHUB_ENV
           echo "ZIP_FILE_NAME=${ZIP_FILE_BASE}.zip" >> $GITHUB_ENV
       - name: Checkout
