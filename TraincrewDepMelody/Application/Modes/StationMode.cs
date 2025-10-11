@@ -67,11 +67,8 @@ public class StationMode : IMode
             // 2回目以降の押下は車両モードの動作
             _logger.LogInformation("StationMode: Additional button press (vehicle mode behavior)");
 
-            // 車両チャンネルのアナウンス再生中なら停止
-            if (_playbackState == PlaybackState.PlayingAnnouncement)
-            {
-                _audioPlayer.Stop("vehicle");
-            }
+            // 車両チャンネルを停止
+            _audioPlayer.Stop("vehicle");
 
             // 車両メロディーをループ再生
             PlayVehicleMelody();
