@@ -37,9 +37,9 @@ public class TraincrewApiClient
     {
         try
         {
-            _logger.LogInformation("Connecting to Traincrew API: {Endpoint}", _endpoint);
+            _logger.LogInformation("Connecting to Traincrew API");
 
-            var success = _api.Connect(_endpoint);
+            var success = _api.Connect();
 
             if (success)
             {

@@ -11,7 +11,7 @@ public interface ITraincrewApi
     /// <summary>
     /// API接続
     /// </summary>
-    bool Connect(string endpoint);
+    bool Connect();
 
     /// <summary>
     /// API切断
