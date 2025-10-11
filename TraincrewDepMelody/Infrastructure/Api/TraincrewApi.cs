@@ -1,32 +1,44 @@
-﻿using TraincrewDepMelody.Models;
+﻿using TrainCrew;
+using TraincrewDepMelody.Models;
 
 namespace TraincrewDepMelody.Infrastructure.Api;
 
 public class TraincrewApi : ITraincrewApi
 {
+    private bool _isConnected;
+    private string _trainNumber = string.Empty; 
     public bool Connect()
     {
-        throw new NotImplementedException();
+        TrainCrewInput.Init();
+        _isConnected = true;
+        return true;
     }
 
     public void Disconnect()
     {
-        throw new NotImplementedException();
+        TrainCrewInput.Dispose();
+        _isConnected = false;
     }
 
     public bool IsConnected()
     {
-        throw new NotImplementedException();
+        return _isConnected;
     }
 
     public void FetchData()
     {
-        throw new NotImplementedException();
+        var trainState = TrainCrewInput.GetTrainState();
+        _trainNumber = trainState.diaName;
     }
 
     public GameStatus GetGameStatus()
     {
-        throw new NotImplementedException();
+        return TrainCrewInput.gameState.gameScreen switch
+        {
+            GameScreen.MainGame => GameStatus.Running,
+            GameScreen.MainGame_Pause => GameStatus.Paused,
+            _ => GameStatus.Stopped
+        };
     }
 
     public List<string> GetTrackCircuits()
@@ -36,6 +48,6 @@ public class TraincrewApi : ITraincrewApi
 
     public string GetTrainNumber()
     {
-        throw new NotImplementedException();
+        return _trainNumber;
     }
 }
