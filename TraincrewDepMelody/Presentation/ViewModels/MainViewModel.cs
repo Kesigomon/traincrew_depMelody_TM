@@ -3,6 +3,7 @@ using System.Windows;
 using Microsoft.Extensions.Logging;
 using TraincrewDepMelody.Application.Audio;
 using TraincrewDepMelody.Application.Modes;
+using TraincrewDepMelody.Application.UI;
 using TraincrewDepMelody.Infrastructure.Api;
 using TraincrewDepMelody.Infrastructure.Logging;
 using TraincrewDepMelody.Infrastructure.Repositories;
@@ -22,6 +23,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly AudioPlayer? _audioPlayer;
     private readonly AudioRepository? _audioRepository;
     private readonly SettingsManager? _settingsManager;
+    private readonly TopmostController? _topmostController;
     #endregion
 
     #region プロパティ
@@ -69,6 +71,10 @@ public class MainViewModel : INotifyPropertyChanged
                 _loggerFactory
             );
 
+            // TopmostController初期化
+            _topmostController = new TopmostController(System.Windows.Application.Current.MainWindow);
+            _topmostController.SetMode(_settingsManager.Settings.Topmost);
+
             var logger = _loggerFactory.CreateLogger<MainViewModel>();
             logger.LogInformation("MainViewModel initialized successfully");
         }
@@ -112,6 +118,7 @@ public class MainViewModel : INotifyPropertyChanged
     public void Update()
     {
         _modeManager?.Update();
+        _topmostController?.Update(ApplicationState);
         OnPropertyChanged(nameof(ApplicationState));
     }
 
@@ -146,6 +153,9 @@ public class MainViewModel : INotifyPropertyChanged
             _settingsManager.Settings.ProfileFile = newSettings.ProfileFile;
             _settingsManager.Settings.Topmost = newSettings.Topmost;
             _settingsManager.Settings.EnableKeyboard = newSettings.EnableKeyboard;
+
+            // Topmost設定を適用
+            _topmostController?.SetMode(newSettings.Topmost);
 
             // 設定を保存
             _settingsManager.Save();
