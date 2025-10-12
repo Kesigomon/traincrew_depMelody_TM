@@ -335,11 +335,11 @@ public class ModeManagerTests
 
     #endregion
 
-    #region UT-MM-B-002: 車両モード中、駅にいる時にボタンを押す
+    #region UT-MM-B-002: 車両モード中、駅にいる時はUpdateで駅モードに自動切替
 
     [Fact]
     [Trait("Category", "Unit")]
-    public async Task UT_MM_B_002_車両モード中_駅にいる時にボタンを押す()
+    public async Task UT_MM_B_002_車両モード中_駅にいる時はUpdateで駅モードに自動切替()
     {
         // Arrange
         var modeManager = CreateModeManager();
@@ -351,18 +351,13 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         await _apiClient.FetchData();
 
-        // Act
+        // Act - Updateで駅到着を検知して駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
 
-        // Assert - 駅にいる
+        // Assert - 駅にいて、駅モードに自動切替されている
         _state.IsAtStation.Should().BeTrue();
         _state.CurrentStation.Should().Be(station);
-
-        // ボタンを押す → 駅モードに切替
-        modeManager.OnButtonPressed();
-
-        // Assert - 駅モードに切り替わっている
         _state.CurrentMode.Should().Be(ModeType.Station);
         modeManager.CurrentMode.Should().BeOfType<StationMode>();
     }
@@ -385,24 +380,27 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
+        _state.CurrentMode.Should().Be(ModeType.Station);
 
-        // Act - 1回目のボタン押下
+        // Act - 駅モードでボタン押下
         modeManager.OnButtonPressed();
 
-        // Assert - 駅モードに切り替わり、駅メロディー再生
-        _state.CurrentMode.Should().Be(ModeType.Station);
+        // Assert - 駅メロディー再生後、車両モードに切り替わる
         _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_melody.mp3", false), Times.Once);
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
+        modeManager.CurrentMode.Should().BeOfType<VehicleMode>();
     }
 
     #endregion
 
-    #region UT-MM-B-004: 駅モードで2回目のボタンを押す
+    #region UT-MM-B-004: 駅到着後ボタン押下で車両モードに切替
 
     [Fact]
     [Trait("Category", "Unit")]
-    public async Task UT_MM_B_004_駅モードで2回目のボタンを押す()
+    public async Task UT_MM_B_004_駅到着後ボタン押下で車両モードに切替()
     {
         // Arrange
         var modeManager = CreateModeManager();
@@ -416,30 +414,28 @@ public class ModeManagerTests
             .Returns("sounds/vehicle_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
-
-        // 1回目のボタン押下 → 駅モードへ
-        modeManager.OnButtonPressed();
         _state.CurrentMode.Should().Be(ModeType.Station);
 
-        // Act - 2回目のボタン押下
+        // Act - ボタン押下で駅メロディー再生し、車両モードに切替
         modeManager.OnButtonPressed();
 
         // Assert - 車両モードに切り替わっている
         _state.CurrentMode.Should().Be(ModeType.Vehicle);
         modeManager.CurrentMode.Should().BeOfType<VehicleMode>();
-        // 車両メロディーが再生される
-        _audioPlayerMock.Verify(x => x.Play("vehicle", "sounds/vehicle_melody.mp3", true), Times.Once);
+        // 駅メロディーが再生された
+        _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_melody.mp3", false), Times.Once);
     }
 
     #endregion
 
-    #region UT-MM-B-005: 駅モードで駅メロディー再生中にもう一度押下
+    #region UT-MM-B-005: 駅モードで駅メロディー再生後、駅アナウンスも流れる
 
     [Fact]
     [Trait("Category", "Unit")]
-    public async Task UT_MM_B_005_駅モードで駅メロディー再生中にもう一度押下()
+    public async Task UT_MM_B_005_駅モードで駅メロディー再生後_駅アナウンスも流れる()
     {
         // Arrange
         var modeManager = CreateModeManager();
@@ -451,29 +447,23 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         _audioRepositoryMock.Setup(x => x.GetStationDoorClosing(It.IsAny<bool>()))
             .Returns("sounds/station_door.mp3");
-        _audioRepositoryMock.Setup(x => x.GetVehicleMelody(It.IsAny<Direction>()))
-            .Returns("sounds/vehicle_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
+        _state.CurrentMode.Should().Be(ModeType.Station);
 
-        // 1回目のボタン押下 → 駅モードへ、駅メロディー再生
+        // Act - ボタン押下 → 駅メロディー再生、車両モードに切替
         modeManager.OnButtonPressed();
         _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_melody.mp3", false), Times.Once);
-
-        // Act - 駅メロディー再生中にもう一度押下
-        modeManager.OnButtonPressed();
-
-        // Assert - 車両モードに切り替わり、車両メロディー再生
         _state.CurrentMode.Should().Be(ModeType.Vehicle);
-        _audioPlayerMock.Verify(x => x.Play("vehicle", "sounds/vehicle_melody.mp3", true), Times.Once);
+
         // 駅メロディー終了 → 駅アナウンスが流れることを確認
         _audioPlayerMock.Raise(x => x.PlaybackFinished += null, EventArgs.Empty);
+
+        // Assert - 駅アナウンスが再生される
         _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_door.mp3", false), Times.Once);
-        // 駅側のメロディーは止まらない (StopAllやStop("station")が呼ばれない)
-        _audioPlayerMock.Verify(x => x.StopAll(), Times.Never);
-        _audioPlayerMock.Verify(x => x.Stop("station"), Times.Never);
     }
 
     #endregion
@@ -498,20 +488,25 @@ public class ModeManagerTests
             .Returns("sounds/vehicle_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
+        _state.CurrentMode.Should().Be(ModeType.Station);
 
-        // 駅モードに切り替え、駅メロディー再生
+        // ボタン押下→駅メロディー再生、車両モードに切替
         modeManager.OnButtonPressed();
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
 
         // 駅メロディー終了 → アナウンス再生 (PlaybackFinishedイベントを発火)
         _audioPlayerMock.Raise(x => x.PlaybackFinished += null, EventArgs.Empty);
         _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_door.mp3", false), Times.Once);
 
-        // Act - アナウンス再生中にもう一度押下
+        _audioPlayerMock.Invocations.Clear();
+
+        // Act - アナウンス再生中にもう一度押下 (車両モード中)
         modeManager.OnButtonPressed();
 
-        // Assert - 車両モードに切り替わり、車両メロディー再生
+        // Assert - 車両モードのまま、車両メロディー再生
         _state.CurrentMode.Should().Be(ModeType.Vehicle);
         _audioPlayerMock.Verify(x => x.Play("vehicle", "sounds/vehicle_melody.mp3", true), Times.Once);
         // 駅側のアナウンスは止まらない
@@ -562,6 +557,49 @@ public class ModeManagerTests
     }
 
     #endregion
+
+    #endregion
+
+    #region UT-MM-B-007B: 駅到着→1回目押下→2回目押下の挙動
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task UT_MM_B_007B_駅到着後1回目押下で駅メロディー_2回目押下で車両メロディー()
+    {
+        // Arrange
+        var modeManager = CreateModeManager();
+        var station = new StationInfo { StationName = "渋谷", Platform = 1 };
+        _mockApi.SetTrainNumber("1262");
+        _mockApi.SetOccupiedTracks(new List<string> { "SB-01", "SB-02" });
+        _stationRepositoryMock.Setup(x => x.FindStation(It.IsAny<List<string>>())).Returns(station);
+        _audioRepositoryMock.Setup(x => x.GetStationMelody(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Direction>()))
+            .Returns("sounds/station_melody.mp3");
+        _audioRepositoryMock.Setup(x => x.GetVehicleMelody(It.IsAny<Direction>()))
+            .Returns("sounds/vehicle_melody.mp3");
+        await _apiClient.FetchData();
+
+        // Updateで駅到着を検知→駅モードに自動切替
+        modeManager.Update();
+        await Task.Delay(50);
+        _state.CurrentMode.Should().Be(ModeType.Station);
+
+        // 1回目のボタン押下 → 駅メロディー再生、車両モードへ切替
+        modeManager.OnButtonPressed();
+        _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_melody.mp3", false), Times.Once);
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
+
+        _audioPlayerMock.Invocations.Clear();
+
+        // Act - 2回目のボタン押下 → 車両モードのまま、車両メロディー再生
+        modeManager.OnButtonPressed();
+
+        // Assert - 車両モードのままで、車両メロディーが再生される
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
+        modeManager.CurrentMode.Should().BeOfType<VehicleMode>();
+        _audioPlayerMock.Verify(x => x.Play("vehicle", "sounds/vehicle_melody.mp3", true), Times.Once);
+        // 駅メロディーは再生されない
+        _audioPlayerMock.Verify(x => x.Play("station", It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+    }
 
     #endregion
 
@@ -617,16 +655,14 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
-
-        // ボタン押下 → 駅モードへ
-        modeManager.OnButtonPressed();
         _state.CurrentMode.Should().Be(ModeType.Station);
 
         _audioPlayerMock.Invocations.Clear();
 
-        // Act - ボタンリリース
+        // Act - ボタンリリース（駅モード中）
         modeManager.OnButtonReleased();
 
         // Assert - 何も起こらない（Stopが呼ばれない）
@@ -658,13 +694,15 @@ public class ModeManagerTests
             .Returns("sounds/vehicle_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
 
-        // 駅にいることを確認
+        // 駅にいて、駅モードになっている
         _state.IsAtStation.Should().BeTrue();
+        _state.CurrentMode.Should().Be(ModeType.Station);
 
-        // Act - ボタン押下
+        // Act - ボタン押下 → 駅メロディーがないので車両モードにフォールバック
         modeManager.OnButtonPressed();
 
         // Assert - 車両モードに切り替わり、車両メロディー再生
@@ -739,11 +777,9 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
-
-        // 駅モードに切り替え
-        modeManager.OnButtonPressed();
         _state.CurrentMode.Should().Be(ModeType.Station);
 
         // Act - 駅から発車
@@ -853,11 +889,9 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
-
-        // 駅モードに切り替え
-        modeManager.OnButtonPressed();
         _state.CurrentMode.Should().Be(ModeType.Station);
 
         // Act - ゲームを停止
@@ -878,11 +912,11 @@ public class ModeManagerTests
 
     #region モード切替テスト
 
-    #region UT-MM-M-001: 車両モード → 駅モード切替でApplicationState更新
+    #region UT-MM-M-001: 駅到着でUpdateが車両モード→駅モード切替しApplicationState更新
 
     [Fact]
     [Trait("Category", "Unit")]
-    public async Task UT_MM_M_001_車両モードから駅モード切替でApplicationState更新()
+    public async Task UT_MM_M_001_駅到着でUpdateが車両モードから駅モード切替しApplicationState更新()
     {
         // Arrange
         var modeManager = CreateModeManager();
@@ -894,15 +928,13 @@ public class ModeManagerTests
             .Returns("sounds/station_melody.mp3");
         await _apiClient.FetchData();
 
-        modeManager.Update();
-        await Task.Delay(50);
-
         // 初期状態は車両モード
         _state.CurrentMode.Should().Be(ModeType.Vehicle);
         modeManager.CurrentMode.Should().BeOfType<VehicleMode>();
 
-        // Act - ボタン押下で駅モードに切替
-        modeManager.OnButtonPressed();
+        // Act - Updateで駅到着を検知して駅モードに自動切替
+        modeManager.Update();
+        await Task.Delay(50);
 
         // Assert - ApplicationStateが更新される
         _state.CurrentMode.Should().Be(ModeType.Station);
@@ -921,11 +953,11 @@ public class ModeManagerTests
 
     #endregion
 
-    #region UT-MM-M-002: 駅モード → 車両モード切替でApplicationState更新
+    #region UT-MM-M-002: 駅モード中ボタン押下で駅モード → 車両モード切替しApplicationState更新
 
     [Fact]
     [Trait("Category", "Unit")]
-    public async Task UT_MM_M_002_駅モードから車両モード切替でApplicationState更新()
+    public async Task UT_MM_M_002_駅モード中ボタン押下で駅モードから車両モード切替しApplicationState更新()
     {
         // Arrange
         var modeManager = CreateModeManager();
@@ -939,14 +971,12 @@ public class ModeManagerTests
             .Returns("sounds/vehicle_melody.mp3");
         await _apiClient.FetchData();
 
+        // Updateで駅到着→駅モードに自動切替
         modeManager.Update();
         await Task.Delay(50);
-
-        // 駅モードに切替
-        modeManager.OnButtonPressed();
         _state.CurrentMode.Should().Be(ModeType.Station);
 
-        // Act - もう一度ボタン押下で車両モードに切替
+        // Act - ボタン押下で車両モードに切替
         modeManager.OnButtonPressed();
 
         // Assert - ApplicationStateが更新される

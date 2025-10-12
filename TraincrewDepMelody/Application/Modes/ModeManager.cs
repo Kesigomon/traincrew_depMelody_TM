@@ -70,19 +70,12 @@ public class ModeManager
     /// </summary>
     public void OnButtonPressed()
     {
-        // 駅モード切替判定
-        if (_currentMode is VehicleMode && _state.IsAtStation)
+        // 駅モード中のボタン押下は、駅メロディーを鳴らしてから車両モードに切り替え
+        if (_currentMode is StationMode)
         {
-            _logger.LogInformation("At station, switching to StationMode");
-            SwitchMode(_stationMode);
-            _currentMode.OnButtonPressed();
-        }
-        // 駅モード中のボタン押下は車両モードに切り替え
-        else if (_currentMode is StationMode)
-        {
-            _logger.LogInformation("StationMode: Button press, switching to VehicleMode");
-            SwitchMode(_vehicleMode);
-            _currentMode.OnButtonPressed();
+            _logger.LogInformation("StationMode: Button press, playing melody then switching to VehicleMode");
+            _currentMode.OnButtonPressed(); // 駅メロディー再生
+            SwitchMode(_vehicleMode); // 即座に車両モードに切替
         }
         else
         {
@@ -186,12 +179,18 @@ public class ModeManager
     /// </summary>
     private void DetectStationChange(StationInfo? currentStation)
     {
-        // 駅到着
+        // 駅到着 → 駅モードに自動切替
         if (currentStation != null && _previousStation == null)
         {
             _logger.LogInformation($"Arrived at {currentStation.StationName} platform {currentStation.Platform}");
+
+            // 車両モード中なら駅モードに切替
+            if (_currentMode is VehicleMode)
+            {
+                SwitchMode(_stationMode);
+            }
         }
-        // 駅発車
+        // 駅発車 → 車両モードに自動切替
         else if (currentStation == null && _previousStation != null)
         {
             _logger.LogInformation($"Departed from {_previousStation.StationName}");
