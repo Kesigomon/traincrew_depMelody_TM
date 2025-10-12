@@ -129,9 +129,13 @@ public class ModeManager
     /// <summary>
     /// モード切替
     /// </summary>
-    public void SwitchMode(IMode newMode)
+    private void SwitchMode(IMode newMode)
     {
-        _logger.LogInformation($"Mode switch: {_currentMode.GetType().Name} -> {newMode.GetType().Name}");
+        if (_currentMode == newMode)
+        {
+            return;
+        }
+        _logger.LogInformation("Mode switch: {oldMode} -> {newMode}", _currentMode.GetType().Name, newMode.GetType().Name);
 
         _currentMode.OnExit();
         _currentMode = newMode;
