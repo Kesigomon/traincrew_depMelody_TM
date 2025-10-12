@@ -449,6 +449,8 @@ public class ModeManagerTests
         _stationRepositoryMock.Setup(x => x.FindStation(It.IsAny<List<string>>())).Returns(station);
         _audioRepositoryMock.Setup(x => x.GetStationMelody(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Direction>()))
             .Returns("sounds/station_melody.mp3");
+        _audioRepositoryMock.Setup(x => x.GetStationDoorClosing(It.IsAny<bool>()))
+            .Returns("sounds/station_door.mp3");
         _audioRepositoryMock.Setup(x => x.GetVehicleMelody(It.IsAny<Direction>()))
             .Returns("sounds/vehicle_melody.mp3");
         await _apiClient.FetchData();
@@ -466,6 +468,9 @@ public class ModeManagerTests
         // Assert - 車両モードに切り替わり、車両メロディー再生
         _state.CurrentMode.Should().Be(ModeType.Vehicle);
         _audioPlayerMock.Verify(x => x.Play("vehicle", "sounds/vehicle_melody.mp3", true), Times.Once);
+        // 駅メロディー終了 → 駅アナウンスが流れることを確認
+        _audioPlayerMock.Raise(x => x.PlaybackFinished += null, EventArgs.Empty);
+        _audioPlayerMock.Verify(x => x.Play("station", "sounds/station_door.mp3", false), Times.Once);
         // 駅側のメロディーは止まらない (StopAllやStop("station")が呼ばれない)
         _audioPlayerMock.Verify(x => x.StopAll(), Times.Never);
         _audioPlayerMock.Verify(x => x.Stop("station"), Times.Never);

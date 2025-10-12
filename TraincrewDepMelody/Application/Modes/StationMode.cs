@@ -50,7 +50,7 @@ public class StationMode : IMode
     {
         _logger.LogInformation("Exit StationMode");
         // 駅側の音声は止めない（駅メロディーが鳴っている最中に発車する状況を再現）
-        _playbackState = PlaybackState.Idle;
+        // PlaybackStateもリセットしない（駅メロディー終了後にアナウンスを流すため）
     }
 
     public void OnButtonPressed()
