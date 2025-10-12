@@ -997,4 +997,107 @@ public class ModeManagerTests
     #endregion
 
     #endregion
+
+    #region ゲーム再開時のモード復元テスト
+
+    #region UT-MM-R-001: 駅モードでゲーム終了後、同じ駅から再度スタートしたときは再度駅モードに戻ること
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task UT_MM_R_001_駅モードでゲーム終了後_同じ駅から再度スタートしたときは再度駅モードに戻ること()
+    {
+        // Arrange
+        var modeManager = CreateModeManager();
+        var station = new StationInfo { StationName = "渋谷", Platform = 1 };
+        _mockApi.SetTrainNumber("1262");
+        _mockApi.SetOccupiedTracks(new List<string> { "SB-01", "SB-02" });
+        _mockApi.SetGameStatus(GameStatus.Running);
+        _stationRepositoryMock.Setup(x => x.FindStation(It.IsAny<List<string>>())).Returns(station);
+        _audioRepositoryMock.Setup(x => x.GetStationMelody(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Direction>()))
+            .Returns("sounds/station_melody.mp3");
+        await _apiClient.FetchData();
+
+        // 駅到着→駅モードに自動切替
+        modeManager.Update();
+        await Task.Delay(50);
+        _state.CurrentMode.Should().Be(ModeType.Station);
+        _state.IsAtStation.Should().BeTrue();
+
+        // Act - ゲーム終了 (Stopped状態になる)
+        _mockApi.SetGameStatus(GameStatus.Stopped);
+        await _apiClient.FetchData();
+        modeManager.Update();
+        await Task.Delay(50);
+
+        // ゲーム終了時は車両モードに切り替わる
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
+
+        // 同じ駅から再度スタート
+        _mockApi.SetGameStatus(GameStatus.Running);
+        await _apiClient.FetchData();
+        modeManager.Update();
+        await Task.Delay(50);
+
+        // Assert - 再度駅モードに戻る
+        _state.CurrentMode.Should().Be(ModeType.Station);
+        _state.IsAtStation.Should().BeTrue();
+        _state.CurrentStation.Should().Be(station);
+        modeManager.CurrentMode.Should().BeOfType<StationMode>();
+    }
+
+    #endregion
+
+    #region UT-MM-R-002: 車両モードでゲーム終了後、同じ駅から再度スタートしたときは再度駅モードに戻ること
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task UT_MM_R_002_車両モードでゲーム終了後_同じ駅から再度スタートしたときは駅モードに戻ること()
+    {
+        // Arrange
+        var modeManager = CreateModeManager();
+        var station = new StationInfo { StationName = "渋谷", Platform = 1 };
+        _mockApi.SetTrainNumber("1262");
+        _mockApi.SetOccupiedTracks(new List<string> { "SB-01", "SB-02" });
+        _mockApi.SetGameStatus(GameStatus.Running);
+        _stationRepositoryMock.Setup(x => x.FindStation(It.IsAny<List<string>>())).Returns(station);
+        _audioRepositoryMock.Setup(x => x.GetStationMelody(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Direction>()))
+            .Returns("sounds/station_melody.mp3");
+        _audioRepositoryMock.Setup(x => x.GetVehicleMelody(It.IsAny<Direction>()))
+            .Returns("sounds/vehicle_melody.mp3");
+        await _apiClient.FetchData();
+
+        // 駅到着→駅モードに自動切替
+        modeManager.Update();
+        await Task.Delay(50);
+        _state.CurrentMode.Should().Be(ModeType.Station);
+
+        // ボタン押下で車両モードに切替
+        modeManager.OnButtonPressed();
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
+
+        // Act - ゲーム終了 (Stopped状態になる)
+        _mockApi.SetGameStatus(GameStatus.Stopped);
+        await _apiClient.FetchData();
+        modeManager.Update();
+        await Task.Delay(50);
+
+        // ゲーム終了時も車両モードのまま
+        _state.CurrentMode.Should().Be(ModeType.Vehicle);
+
+        // 同じ駅から再度スタート (位置は変わっていない)
+        _mockApi.SetGameStatus(GameStatus.Running);
+        await _apiClient.FetchData();
+        modeManager.Update();
+        await Task.Delay(50);
+
+        // Assert - 駅にいるので駅モードに戻る
+        _state.CurrentMode.Should().Be(ModeType.Station);
+        _state.IsAtStation.Should().BeTrue();
+        _state.CurrentStation.Should().Be(station);
+        modeManager.CurrentMode.Should().BeOfType<StationMode>();
+    }
+
+    #endregion
+
+    #endregion
 }

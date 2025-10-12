@@ -234,6 +234,9 @@ public class ModeManager
                 {
                     SwitchMode(_vehicleMode);
                 }
+
+                // ゲーム終了時は前回の駅情報をクリアして、再開時に駅到着判定が正しく動作するようにする
+                _previousStation = null;
                 break;
         }
     }
