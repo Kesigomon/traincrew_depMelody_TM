@@ -4,6 +4,8 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraincrewDepMelody", "TraincrewDepMelody\TraincrewDepMelody.csproj", "{A00F0D9C-912F-14EF-5530-3FC66005A82D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraincrewDepMelody.Tests", "TraincrewDepMelody.Tests\TraincrewDepMelody.Tests.csproj", "{BC99BD35-FF50-405D-8853-ABD470F31334}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,6 +16,10 @@ Global
 		{A00F0D9C-912F-14EF-5530-3FC66005A82D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A00F0D9C-912F-14EF-5530-3FC66005A82D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A00F0D9C-912F-14EF-5530-3FC66005A82D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC99BD35-FF50-405D-8853-ABD470F31334}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC99BD35-FF50-405D-8853-ABD470F31334}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC99BD35-FF50-405D-8853-ABD470F31334}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC99BD35-FF50-405D-8853-ABD470F31334}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
