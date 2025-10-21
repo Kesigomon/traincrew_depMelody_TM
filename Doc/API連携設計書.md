@@ -10,14 +10,19 @@
 
 ### 1.1 API提供方式
 
-Traincrew APIは2つの方式で提供されます。
+Traincrew APIは以下の方式で提供されます。
 
-| 提供方式 | 説明 | 実装担当 |
+| 提供方式 | 説明 | 実装状況 |
 |---------|-----|---------|
-| DLL方式 | C#から直接呼び出し可能なDLL | 別途実装 |
-| WebSocket方式 | WebSocket経由でリアルタイム通信 | 別途実装 |
+| DLL + WebSocket方式 | TrainCrewInput.dll + WebSocket連携 | 実装済み (`TraincrewApi`) |
+| モック実装 | テスト用のモック実装 | 実装済み (`MockTraincrewApi`) |
 
-**注意**: 本設計書では、APIのメソッドシグネチャのみを定義し、実装は別途提供されるDLL/WebSocketライブラリに委ねます。
+**現在の状況**:
+- プロジェクトには `TrainCrewInput.dll` への参照が追加されています
+- `TraincrewApi` クラスで実API実装が完了しています
+  - TrainCrewInput.dll を使用したゲーム状態・列番取得
+  - WebSocket (ws://127.0.0.1:50300/) を使用した軌道回路データ取得
+- `MockTraincrewApi` はテスト用として利用可能です
 
 ### 1.2 API提供情報
 
@@ -35,19 +40,19 @@ Traincrew APIから取得する情報は以下の通りです。
 
 ### 2.1 ITraincrewApi インターフェース
 
+**実装状況**: インターフェース定義済み、実装は `MockTraincrewApi` のみ
+
 ```csharp
 /// <summary>
 /// Traincrew API インターフェース
-/// (実装は別途提供されるDLL/WebSocketライブラリに委ねる)
 /// </summary>
 public interface ITraincrewApi
 {
     /// <summary>
     /// API接続
     /// </summary>
-    /// <param name="endpoint">APIエンドポイント (例: "http://localhost:8080")</param>
     /// <returns>接続成功: true, 失敗: false</returns>
-    bool Connect(string endpoint);
+    bool Connect();
 
     /// <summary>
     /// API切断
@@ -65,8 +70,7 @@ public interface ITraincrewApi
     /// このメソッドが実際にAPI通信を行い、取得した値をクラス内部に保持する。
     /// GetGameStatus, GetTrackCircuits, GetTrainNumberは保持された値を返すだけ。
     /// </summary>
-    /// <exception cref="ApiConnectionException">API接続エラー</exception>
-    void FetchData();
+    Task FetchData();
 
     /// <summary>
     /// ゲーム状態取得（FetchDataで取得した値を返す）
@@ -87,6 +91,10 @@ public interface ITraincrewApi
     string GetTrainNumber();
 }
 ```
+
+**変更点**:
+- `Connect()` メソッドからendpointパラメータを削除（設定ファイルから読み込む）
+- `FetchData()` を非同期メソッド (`Task`) に変更
 
 ### 2.2 GameStatus 列挙型
 
@@ -132,22 +140,18 @@ public class ApiConnectionException : Exception
 
 ### 3.1 クラス設計
 
+**実装状況**: 実装済み
+
 ```csharp
 /// <summary>
 /// Traincrew API クライアント
-/// (ITraincrewApi の実装をラップし、エラーハンドリングとリトライ処理を提供)
+/// (ITraincrewApi の実装をラップし、エラーハンドリングを提供)
 /// </summary>
 public class TraincrewApiClient
 {
     #region フィールド
-    private ITraincrewApi _api;
-    private ILogger _logger;
-    private string _endpoint;
-
-    // リトライ設定
-    private const int MaxRetryCount = 3;
-    private const int RetryDelayMs = 1000;
-    private int _consecutiveFailures = 0;
+    private readonly ITraincrewApi _api;
+    private readonly ILogger<TraincrewApiClient> _logger;
     #endregion
 
     #region コンストラクタ
@@ -156,12 +160,10 @@ public class TraincrewApiClient
     /// </summary>
     /// <param name="api">Traincrew API実装</param>
     /// <param name="logger">ロガー</param>
-    /// <param name="endpoint">APIエンドポイント</param>
-    public TraincrewApiClient(ITraincrewApi api, ILogger logger, string endpoint)
+    public TraincrewApiClient(ITraincrewApi api, ILogger<TraincrewApiClient> logger)
     {
         _api = api;
         _logger = logger;
-        _endpoint = endpoint;
     }
     #endregion
 
@@ -173,25 +175,24 @@ public class TraincrewApiClient
     {
         try
         {
-            _logger.Info($"Connecting to Traincrew API: {_endpoint}");
+            _logger.LogInformation("Connecting to Traincrew API");
 
-            var success = _api.Connect(_endpoint);
+            var success = _api.Connect();
 
             if (success)
             {
-                _logger.Info("Connected to Traincrew API");
-                _consecutiveFailures = 0;
+                _logger.LogInformation("Connected to Traincrew API");
             }
             else
             {
-                _logger.Error("Failed to connect to Traincrew API");
+                _logger.LogError("Failed to connect to Traincrew API");
             }
 
             return success;
         }
         catch (Exception ex)
         {
-            _logger.Error($"Exception during API connection: {_endpoint}", ex);
+            _logger.LogError(ex, "Exception during API connection");
             return false;
         }
     }
@@ -204,11 +205,11 @@ public class TraincrewApiClient
         try
         {
             _api.Disconnect();
-            _logger.Info("Disconnected from Traincrew API");
+            _logger.LogInformation("Disconnected from Traincrew API");
         }
         catch (Exception ex)
         {
-            _logger.Error("Exception during API disconnection", ex);
+            _logger.LogError(ex, "Exception during API disconnection");
         }
     }
 
@@ -223,22 +224,25 @@ public class TraincrewApiClient
         }
         catch (Exception ex)
         {
-            _logger.Error("Exception during IsConnected check", ex);
+            _logger.LogError(ex, "Exception during IsConnected check");
             return false;
         }
     }
 
     /// <summary>
-    /// データ取得 (リトライ処理付き)
+    /// データ取得 (非同期)
     /// API通信を実行し、内部にデータを保持
     /// </summary>
-    public void FetchData()
+    public async Task FetchData()
     {
-        ExecuteWithRetry(() =>
+        try
         {
-            _api.FetchData();
-            return true;
-        }, false);
+            await _api.FetchData();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch data from API");
+        }
     }
 
     /// <summary>
@@ -253,7 +257,7 @@ public class TraincrewApiClient
         }
         catch (Exception ex)
         {
-            _logger.Error("Failed to get game status", ex);
+            _logger.LogError(ex, "Failed to get game status");
             return GameStatus.Stopped;
         }
     }
@@ -270,7 +274,7 @@ public class TraincrewApiClient
         }
         catch (Exception ex)
         {
-            _logger.Error("Failed to get occupied tracks", ex);
+            _logger.LogError(ex, "Failed to get occupied tracks");
             return new List<string>();
         }
     }
@@ -287,62 +291,9 @@ public class TraincrewApiClient
         }
         catch (Exception ex)
         {
-            _logger.Error("Failed to get train number", ex);
+            _logger.LogError(ex, "Failed to get train number");
             return string.Empty;
         }
-    }
-    #endregion
-
-    #region プライベートメソッド
-    /// <summary>
-    /// リトライ処理を伴うAPI呼び出し
-    /// </summary>
-    private T ExecuteWithRetry<T>(Func<T> apiCall, T defaultValue)
-    {
-        for (int attempt = 0; attempt < MaxRetryCount; attempt++)
-        {
-            try
-            {
-                var result = apiCall();
-
-                // 成功したら連続失敗カウントをリセット
-                _consecutiveFailures = 0;
-
-                return result;
-            }
-            catch (ApiConnectionException ex)
-            {
-                _consecutiveFailures++;
-
-                _logger.Warn($"API call failed (attempt {attempt + 1}/{MaxRetryCount}): {ex.Message}");
-
-                if (attempt < MaxRetryCount - 1)
-                {
-                    // 最後の試行以外はリトライ
-                    Thread.Sleep(RetryDelayMs);
-                }
-                else
-                {
-                    // 最大リトライ回数に達した
-                    _logger.Error($"API call failed after {MaxRetryCount} attempts. Returning default value.");
-
-                    // 連続失敗が一定数を超えたら警告
-                    if (_consecutiveFailures >= 5)
-                    {
-                        _logger.Error($"API connection unstable: {_consecutiveFailures} consecutive failures");
-                    }
-
-                    return defaultValue;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Unexpected exception during API call: {ex.Message}", ex);
-                return defaultValue;
-            }
-        }
-
-        return defaultValue;
     }
     #endregion
 }
@@ -802,9 +753,106 @@ public interface ITraincrewApi
 
 ---
 
-## 12. テスト用モックAPI
+## 12. API実装詳細
 
-### 12.1 MockTraincrewApi
+### 12.1 TraincrewApi (実装済み)
+
+**実装方式**: TrainCrewInput.dll + WebSocket連携
+
+```csharp
+/// <summary>
+/// Traincrew API実装
+/// </summary>
+public class TraincrewApi : ITraincrewApi, IDisposable
+{
+    private const string ConnectUri = "ws://127.0.0.1:50300/";
+    private bool _isConnected;
+    private string _trainNumber = string.Empty;
+    private ClientWebSocket _webSocket = new();
+    private List<string> _trackCircuits = [];
+
+    /// <summary>
+    /// API接続 (TrainCrewInput.dllを初期化)
+    /// </summary>
+    public bool Connect()
+    {
+        TrainCrewInput.Init();
+        _isConnected = true;
+        return true;
+    }
+
+    /// <summary>
+    /// API切断
+    /// </summary>
+    public void Disconnect()
+    {
+        TrainCrewInput.Dispose();
+        _isConnected = false;
+    }
+
+    /// <summary>
+    /// データ取得 (非同期)
+    /// - TrainCrewInput.dllから列番とゲーム状態を取得
+    /// - WebSocketから軌道回路データを取得
+    /// </summary>
+    public async Task FetchData()
+    {
+        TrainCrewInput.RequestData(DataRequest.Signal);
+        var trainState = TrainCrewInput.GetTrainState();
+        _trainNumber = trainState.diaName;
+
+        // WebSocket接続して軌道回路データを取得
+        if (_webSocket.State != WebSocketState.Open)
+        {
+            await _webSocket.ConnectAsync(new(ConnectUri), CancellationToken.None);
+        }
+
+        if (GetGameStatus() == GameStatus.Running)
+        {
+            await SendMessages();  // データリクエスト送信
+            await ReceiveMessages(_trainNumber);  // 軌道回路データ受信
+        }
+    }
+
+    /// <summary>
+    /// ゲーム状態取得
+    /// </summary>
+    public GameStatus GetGameStatus()
+    {
+        return TrainCrewInput.gameState.gameScreen switch
+        {
+            GameScreen.MainGame => GameStatus.Running,
+            GameScreen.MainGame_Pause => GameStatus.Paused,
+            _ => GameStatus.Stopped
+        };
+    }
+
+    /// <summary>
+    /// 在線軌道回路リスト取得
+    /// </summary>
+    public List<string> GetTrackCircuits()
+    {
+        return _trackCircuits.ToList();
+    }
+
+    /// <summary>
+    /// 列番取得
+    /// </summary>
+    public string GetTrainNumber()
+    {
+        return _trainNumber;
+    }
+}
+```
+
+**データ取得フロー**:
+1. `TrainCrewInput.dll` から列番とゲーム状態を取得
+2. WebSocket (ws://127.0.0.1:50300/) に接続
+3. `DataRequest` コマンドを送信
+4. `TrainCrewStateData` を受信して軌道回路リストを取得
+5. 自列車の列番と一致する軌道回路のみをフィルタリング
+
+### 12.2 MockTraincrewApi (テスト用)
 
 ```csharp
 /// <summary>
@@ -814,10 +862,10 @@ public class MockTraincrewApi : ITraincrewApi
 {
     private bool _isConnected = false;
     private GameStatus _gameStatus = GameStatus.Running;
-    private List<string> _occupiedTracks = new List<string>();
-    private string _trainNumber = "1262";
+    private static List<string> _occupiedTracks = ["TH64_12RT"];
+    private string _trainNumber = "1261";
 
-    public bool Connect(string endpoint)
+    public bool Connect()
     {
         _isConnected = true;
         return true;
@@ -833,34 +881,21 @@ public class MockTraincrewApi : ITraincrewApi
         return _isConnected;
     }
 
-    /// <summary>
-    /// データ取得（モックなので何もしない）
-    /// </summary>
-    public void FetchData()
+    public Task FetchData()
     {
-        // モック実装では何もしない
-        // 実際のAPI実装では、ここでAPI通信を行い内部にデータを保持する
+        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// ゲーム状態取得（保持した値を返す）
-    /// </summary>
     public GameStatus GetGameStatus()
     {
         return _gameStatus;
     }
 
-    /// <summary>
-    /// 在線軌道回路リスト取得（保持した値を返す）
-    /// </summary>
     public List<string> GetTrackCircuits()
     {
-        return new List<string>(_occupiedTracks);
+        return [.._occupiedTracks];
     }
 
-    /// <summary>
-    /// 列番取得（保持した値を返す）
-    /// </summary>
     public string GetTrainNumber()
     {
         return _trainNumber;
@@ -873,24 +908,6 @@ public class MockTraincrewApi : ITraincrewApi
 }
 ```
 
-### 12.2 使用例
-
-```csharp
-// テスト時
-var mockApi = new MockTraincrewApi();
-var apiClient = new TraincrewApiClient(mockApi, logger, "mock://localhost");
-
-// テストシナリオ設定
-mockApi.SetGameStatus(GameStatus.Running);
-mockApi.SetOccupiedTracks(new List<string> { "SB-01", "SB-02", "SB-03" });
-mockApi.SetTrainNumber("1262");
-
-// テスト実行
-apiClient.FetchData();  // データ取得
-var gameStatus = apiClient.GetGameStatus();  // 保持した値を取得
-Assert.AreEqual(GameStatus.Running, gameStatus);
-```
-
 ---
 
 **改訂履歴**
@@ -898,3 +915,4 @@ Assert.AreEqual(GameStatus.Running, gameStatus);
 | バージョン | 日付 | 改訂者 | 改訂内容 |
 |-----------|------|--------|----------|
 | 1.0 | 2025-10-11 |  | 初版作成 |
+| 1.1 | 2025-10-21 |  | TraincrewApi実装に合わせて更新 |

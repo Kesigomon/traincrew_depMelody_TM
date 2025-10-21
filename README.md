@@ -90,7 +90,7 @@ dotnet run
 
 または、ビルド後の実行ファイルを直接起動:
 ```
-TraincrewDepMelody\bin\Debug\net8.0-windows\TraincrewDepMelody.exe
+TraincrewDepMelody\bin\Debug\net8.0-windows\Traincrew_depMelody_M.exe
 ```
 
 ## 使用方法
@@ -176,7 +176,10 @@ TraincrewDepMelody\bin\Debug\net8.0-windows\TraincrewDepMelody.exe
 ファイル名: `yyyyMMddHHmmss.txt`
 
 ### API連携
-現在はモック実装ですが、将来的にTraincrewのAPI連携機能が実装される予定です。
+`TraincrewApi` クラスで実装済みです。
+- **TrainCrewInput.dll**: ゲーム状態と列番の取得
+- **WebSocket (ws://127.0.0.1:50300/)**: 軌道回路データの取得
+- **モック実装**: `MockTraincrewApi` がテスト用に利用可能
 
 ## トラブルシューティング
 
