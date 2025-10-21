@@ -193,7 +193,7 @@ internal class AudioChannel : IDisposable
 
         Stop();
 
-        _player.Open(new Uri(filePath, UriKind.Absolute));
+        _player.Open(new(filePath, UriKind.RelativeOrAbsolute));
         _player.Play();
 
         _currentFile = filePath;
