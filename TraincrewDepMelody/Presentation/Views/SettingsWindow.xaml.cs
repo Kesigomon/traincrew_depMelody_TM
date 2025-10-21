@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using TraincrewDepMelody.Models;
 
 namespace TraincrewDepMelody.Presentation.Views;
@@ -12,6 +13,8 @@ public partial class SettingsWindow : Window
 {
     private AppSettings _settings;
     private readonly string _profileDirectory = "profiles";
+    private bool _isCapturingKey;
+    private string _capturedKey = "End";
 
     public AppSettings Settings => _settings;
     public bool IsOkClicked { get; private set; }
@@ -25,6 +28,9 @@ public partial class SettingsWindow : Window
         LoadSettings();
         LoadProfiles();
         LoadRecentLogs();
+
+        // キーボードイベントを登録
+        PreviewKeyDown += OnWindowKeyDown;
     }
 
     /// <summary>
@@ -54,6 +60,10 @@ public partial class SettingsWindow : Window
                 break;
             }
         }
+
+        // InputKey設定
+        _capturedKey = string.IsNullOrWhiteSpace(_settings.InputKey) ? "End" : _settings.InputKey;
+        InputKeyTextBox.Text = _capturedKey;
     }
 
     /// <summary>
@@ -195,6 +205,9 @@ public partial class SettingsWindow : Window
             };
         }
 
+        // InputKey設定
+        _settings.InputKey = _capturedKey;
+
         IsOkClicked = true;
         Close();
     }
@@ -206,5 +219,67 @@ public partial class SettingsWindow : Window
     {
         IsOkClicked = false;
         Close();
+    }
+
+    /// <summary>
+    /// キーキャプチャボタンクリック
+    /// </summary>
+    private void OnCaptureKeyClick(object sender, RoutedEventArgs e)
+    {
+        _isCapturingKey = true;
+        CaptureKeyButton.Content = "キーを押してください...";
+        CaptureKeyButton.IsEnabled = false;
+        InputKeyTextBox.Text = "キーを押してください...";
+        InputKeyTextBox.Background = System.Windows.Media.Brushes.LightYellow;
+
+        // フォーカスをTextBoxに移動（キー入力を受け取るため）
+        InputKeyTextBox.Focus();
+    }
+
+    /// <summary>
+    /// ウィンドウのキーダウンイベント
+    /// </summary>
+    private void OnWindowKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!_isCapturingKey)
+        {
+            return;
+        }
+
+        // キャプチャを無効化するキー（Escapeでキャンセル）
+        if (e.Key == Key.Escape)
+        {
+            _isCapturingKey = false;
+            CaptureKeyButton.Content = "キーを設定";
+            CaptureKeyButton.IsEnabled = true;
+            InputKeyTextBox.Text = _capturedKey;
+            InputKeyTextBox.Background = System.Windows.Media.Brushes.WhiteSmoke;
+            e.Handled = true;
+            return;
+        }
+
+        // システムキー（Alt, Ctrl, Shift, Windows）は単独では登録しない
+        if (e.Key is 
+            Key.LeftAlt or Key.RightAlt or Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift or Key.LWin 
+            or Key.RWin or Key.System)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        // キーを取得
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // キーを保存
+        _capturedKey = key.ToString();
+        InputKeyTextBox.Text = _capturedKey;
+        InputKeyTextBox.Background = System.Windows.Media.Brushes.WhiteSmoke;
+
+        // キャプチャモードを終了
+        _isCapturingKey = false;
+        CaptureKeyButton.Content = "キーを設定";
+        CaptureKeyButton.IsEnabled = true;
+
+        e.Handled = true;
     }
 }

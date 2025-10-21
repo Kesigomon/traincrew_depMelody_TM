@@ -14,7 +14,7 @@ public class AppSettings
     public bool EnableKeyboard { get; set; } = true;
     public WindowPosition WindowPosition { get; set; } = new WindowPosition { X = 100, Y = 100 };
     public WindowSize WindowSize { get; set; } = new WindowSize { Width = 300, Height = 300 };
-    public string InputKey { get; set; } = "Space";
+    public string? InputKey { get; set; } = "Space";
     public string LogLevel { get; set; } = "Info";
 }
 

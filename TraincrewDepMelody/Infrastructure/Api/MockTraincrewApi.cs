@@ -9,8 +9,9 @@ public class MockTraincrewApi : ITraincrewApi
 {
     private bool _isConnected = false;
     private GameStatus _gameStatus = GameStatus.Running;
-    private List<string> _occupiedTracks = new List<string>();
-    private string _trainNumber = "1262";
+    private static List<string> _occupiedTracks = ["TH64_12RT"];
+    
+    private string _trainNumber = "1261";
 
     public bool Connect()
     {
@@ -51,7 +52,7 @@ public class MockTraincrewApi : ITraincrewApi
     /// </summary>
     public List<string> GetTrackCircuits()
     {
-        return new List<string>(_occupiedTracks);
+        return [.._occupiedTracks];
     }
 
     /// <summary>

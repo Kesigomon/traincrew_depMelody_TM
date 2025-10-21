@@ -15,6 +15,8 @@ public partial class MainWindow : Window
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _updateTimer;
     private readonly GlobalKeyboardHook _keyboardHook;
+    private Key _configuredKey = Key.End; // デフォルトはEnd
+    private bool _isSettingsWindowOpen = false;
 
     public MainWindow()
     {
@@ -22,6 +24,9 @@ public partial class MainWindow : Window
 
         _viewModel = new MainViewModel();
         DataContext = _viewModel;
+
+        // 設定ファイルからキーを読み込み
+        LoadInputKeyFromSettings();
 
         // タイマー初期化 (100ms間隔で状態更新)
         _updateTimer = new DispatcherTimer
@@ -79,7 +84,19 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnGlobalKeyDown(object? sender, GlobalKeyEventArgs e)
     {
-        if (e is { Key: Key.End, IsRepeat: false })
+        // 設定ウィンドウが開いている間は無効
+        if (_isSettingsWindowOpen)
+        {
+            return;
+        }
+
+        // キーボード入力が無効化されている場合は無効
+        if (!_viewModel.Settings.EnableKeyboard)
+        {
+            return;
+        }
+
+        if (e.Key == _configuredKey && !e.IsRepeat)
         {
             Dispatcher.Invoke(() => _viewModel.OnButtonPressed());
         }
@@ -90,10 +107,67 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnGlobalKeyUp(object? sender, GlobalKeyEventArgs e)
     {
-        if (e.Key == Key.End)
+        // 設定ウィンドウが開いている間は無効
+        if (_isSettingsWindowOpen)
+        {
+            return;
+        }
+
+        // キーボード入力が無効化されている場合は無効
+        if (!_viewModel.Settings.EnableKeyboard)
+        {
+            return;
+        }
+
+        if (e.Key == _configuredKey)
         {
             Dispatcher.Invoke(() => _viewModel.OnButtonReleased());
         }
+    }
+
+    /// <summary>
+    /// 設定ファイルからInputKeyを読み込む
+    /// </summary>
+    private void LoadInputKeyFromSettings()
+    {
+        try
+        {
+            var keyString = _viewModel.Settings.InputKey;
+            _configuredKey = ParseKeyFromString(keyString);
+        }
+        catch
+        {
+            // パースに失敗した場合はデフォルト値を使用
+            _configuredKey = Key.End;
+        }
+    }
+
+    /// <summary>
+    /// 文字列からKeyを変換
+    /// </summary>
+    private Key ParseKeyFromString(string keyString)
+    {
+        if (string.IsNullOrWhiteSpace(keyString))
+        {
+            return Key.End;
+        }
+
+        // Enum.TryParseを使ってキー名を変換
+        if (Enum.TryParse<Key>(keyString, true, out var key))
+        {
+            return key;
+        }
+
+        // パースに失敗した場合はデフォルト
+        return Key.End;
+    }
+
+    /// <summary>
+    /// 入力キーを更新（設定変更時に呼ばれる）
+    /// </summary>
+    public void UpdateInputKey(string keyString)
+    {
+        _configuredKey = ParseKeyFromString(keyString);
     }
 
     /// <summary>
@@ -101,9 +175,18 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnSettingsClick(object sender, RoutedEventArgs e)
     {
+        // 設定ウィンドウが開いている間はキー操作を無効化
+        _isSettingsWindowOpen = true;
+
         var settingsWindow = new SettingsWindow(_viewModel.Settings)
         {
             Owner = this
+        };
+
+        settingsWindow.Closed += (s, args) =>
+        {
+            // 設定ウィンドウが閉じたらキー操作を有効化
+            _isSettingsWindowOpen = false;
         };
 
         settingsWindow.ShowDialog();
@@ -111,6 +194,9 @@ public partial class MainWindow : Window
         if (settingsWindow.IsOkClicked)
         {
             _viewModel.ApplySettings(settingsWindow.Settings);
+
+            // 入力キーを更新
+            UpdateInputKey(settingsWindow.Settings.InputKey);
         }
     }
 
