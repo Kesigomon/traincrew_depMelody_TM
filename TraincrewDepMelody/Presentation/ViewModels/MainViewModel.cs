@@ -153,6 +153,7 @@ public class MainViewModel : INotifyPropertyChanged
             _settingsManager.Settings.ProfileFile = newSettings.ProfileFile;
             _settingsManager.Settings.Topmost = newSettings.Topmost;
             _settingsManager.Settings.EnableKeyboard = newSettings.EnableKeyboard;
+            _settingsManager.Settings.InputKey = newSettings.InputKey;
 
             // Topmost設定を適用
             _topmostController?.SetMode(newSettings.Topmost);

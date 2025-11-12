@@ -16,6 +16,27 @@ public class AppSettings
     public WindowSize WindowSize { get; set; } = new WindowSize { Width = 300, Height = 300 };
     public string? InputKey { get; set; } = "Space";
     public string LogLevel { get; set; } = "Info";
+
+    /// <summary>
+    /// 設定のディープコピーを作成
+    /// </summary>
+    public AppSettings Clone()
+    {
+        return new AppSettings
+        {
+            CurrentProfile = CurrentProfile,
+            ProfileFile = ProfileFile,
+            StationDefinition = StationDefinition,
+            Topmost = Topmost,
+            ShowOnPause = ShowOnPause,
+            Volume = Volume,
+            EnableKeyboard = EnableKeyboard,
+            WindowPosition = new WindowPosition { X = WindowPosition.X, Y = WindowPosition.Y },
+            WindowSize = new WindowSize { Width = WindowSize.Width, Height = WindowSize.Height },
+            InputKey = InputKey,
+            LogLevel = LogLevel
+        };
+    }
 }
 
 public class WindowPosition

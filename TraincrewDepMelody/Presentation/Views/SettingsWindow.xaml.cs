@@ -23,7 +23,8 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
 
-        _settings = settings;
+        // 設定のコピーを作成（元の設定を変更しないように）
+        _settings = settings.Clone();
 
         LoadSettings();
         LoadProfiles();
