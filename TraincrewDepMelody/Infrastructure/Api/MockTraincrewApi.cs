@@ -9,7 +9,7 @@ public class MockTraincrewApi : ITraincrewApi
 {
     private bool _isConnected = false;
     private GameStatus _gameStatus = GameStatus.Running;
-    private static List<string> _occupiedTracks = ["TH64_12RT"];
+    private List<string> _occupiedTracks = ["TH64_12RT"];
     
     private string _trainNumber = "1261";
 
