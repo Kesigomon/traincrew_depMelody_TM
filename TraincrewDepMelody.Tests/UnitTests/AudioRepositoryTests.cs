@@ -178,8 +178,8 @@ public class AudioRepositoryTests : IDisposable
         // Act - 未定義の駅メロディーを取得
         var filePath = repository.GetStationMelody("未定義駅", 1, Direction.Up);
 
-        // Assert - 車両メロディー(上り)にフォールバック
-        filePath.Should().Be(melodyUp);
+        // Assert - 未定義のためnullが返る
+        filePath.Should().BeNull();
     }
 
     #endregion
@@ -369,8 +369,8 @@ public class AudioRepositoryTests : IDisposable
         // Act - 駅ドア締まります未定義
         var filePath = repository.GetStationDoorClosing(isOddPlatform: true);
 
-        // Assert - 車両ドア締まりますにフォールバック
-        filePath.Should().Be(doorTrain);
+        // Assert - 未定義のためnullが返る
+        filePath.Should().BeNull();
     }
 
     #endregion
