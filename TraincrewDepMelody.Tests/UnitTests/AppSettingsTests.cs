@@ -170,7 +170,6 @@ public class AppSettingsTests : IDisposable
         // Arrange
         var originalSettings = new AppSettings
         {
-            CurrentProfile = "profiles/profile_test.csv",
             ProfileFile = "profile_test.csv",
             StationDefinition = "stations/stations_test.csv",
             Topmost = TopmostMode.AtStationOnly,
@@ -193,8 +192,7 @@ public class AppSettingsTests : IDisposable
 
         // Assert
         loadedSettings.Should().NotBeNull();
-        loadedSettings!.CurrentProfile.Should().Be(originalSettings.CurrentProfile);
-        loadedSettings.ProfileFile.Should().Be(originalSettings.ProfileFile);
+        loadedSettings!.ProfileFile.Should().Be(originalSettings.ProfileFile);
         loadedSettings.StationDefinition.Should().Be(originalSettings.StationDefinition);
         loadedSettings.Topmost.Should().Be(originalSettings.Topmost);
         loadedSettings.ShowOnPause.Should().Be(originalSettings.ShowOnPause);
@@ -347,7 +345,6 @@ public class AppSettingsTests : IDisposable
         // Arrange - 実際のappsettings.jsonの内容を再現
         var jsonContent = @"{
   ""ApiEndpoint"": ""http://localhost:8080"",
-  ""CurrentProfile"": ""profiles/profile_default.csv"",
   ""ProfileFile"": ""profile_default.csv"",
   ""StationDefinition"": ""stations/stations.csv"",
   ""Topmost"": ""Always"",

@@ -58,7 +58,8 @@ public class MainViewModel : INotifyPropertyChanged
 
             // 初期化
             apiClient.Connect();
-            _audioRepository.LoadProfile(_settingsManager.Settings.CurrentProfile);
+            var profilePath = System.IO.Path.Combine("profiles", _settingsManager.Settings.ProfileFile);
+            _audioRepository.LoadProfile(profilePath);
             stationRepository.LoadFromCsv(_settingsManager.Settings.StationDefinition);
             _audioPlayer.SetVolume(_settingsManager.Settings.Volume);
 

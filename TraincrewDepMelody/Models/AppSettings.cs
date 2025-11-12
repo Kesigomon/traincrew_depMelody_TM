@@ -5,7 +5,6 @@ namespace TraincrewDepMelody.Models;
 /// </summary>
 public class AppSettings
 {
-    public string CurrentProfile { get; set; } = "profiles/profile_default.csv";
     public string ProfileFile { get; set; } = "profile_default.csv";
     public string StationDefinition { get; set; } = "stations/stations.csv";
     public TopmostMode Topmost { get; set; } = TopmostMode.Always;
@@ -24,7 +23,6 @@ public class AppSettings
     {
         return new AppSettings
         {
-            CurrentProfile = CurrentProfile,
             ProfileFile = ProfileFile,
             StationDefinition = StationDefinition,
             Topmost = Topmost,
