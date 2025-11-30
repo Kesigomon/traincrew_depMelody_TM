@@ -1,7 +1,7 @@
 種別,駅名,番線,上下,ファイルパス
-車両メロディー,,,上り,sounds/vehicle/melody_up.mp3
-車両メロディー,,,下り,sounds/vehicle/melody_down.mp3
-車両ドア締まります,,,,sounds/door/door_train.mp3
+車両メロディー,,,上り,sounds/vehicle/乗降促進上り.mp3
+車両メロディー,,,下り,sounds/vehicle/乗降促進下り.mp3
+車両ドア締まります,,,,sounds/door/ドア車上.mp3
 駅メロディー,館浜,1,,sounds/station/館浜_1.mp3
 駅メロディー,館浜,2,,sounds/station/館浜_2.mp3
 駅メロディー,館浜,3,,sounds/station/館浜_3.mp3
@@ -50,5 +50,5 @@
 駅メロディー,西赤山,2,,sounds/station/西赤山_2.mp3
 駅メロディー,赤山町,1,,sounds/station/赤山町_1.mp3
 駅メロディー,赤山町,3,,sounds/station/赤山町_3.mp3
-駅ドア締まります,,,奇数,sounds/door/door_odd.mp3
-駅ドア締まります,,,偶数,sounds/door/door_even.mp3
+駅ドア締まります,,,奇数,sounds/door/ドアA線.mp3
+駅ドア締まります,,,偶数,sounds/door/ドアB線.mp3
