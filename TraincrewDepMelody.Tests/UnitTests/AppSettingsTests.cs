@@ -344,7 +344,6 @@ public class AppSettingsTests : IDisposable
     {
         // Arrange - 実際のappsettings.jsonの内容を再現
         var jsonContent = @"{
-  ""ApiEndpoint"": ""http://localhost:8080"",
   ""ProfileFile"": ""profile_default.csv"",
   ""StationDefinition"": ""stations/stations.csv"",
   ""Topmost"": ""Always"",
